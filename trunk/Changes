@@ -1,5 +1,8 @@
 Changes for DateTime-Event-ICal
 
+0.04_01
+- rfc2445.t is compatible with Perl 5.00503
+
 0.04    2003-08-25
 - fixed byday + interval
 - tests are 25% faster due to more efficient monthly-byday algorithm.
