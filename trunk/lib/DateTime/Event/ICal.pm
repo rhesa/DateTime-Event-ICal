@@ -589,7 +589,7 @@ sub recur {
     die "these arguments are not implemented: "._param_str(%args) if @args;
 
     bless $base_set, 'DateTime::Set::ICal';
-    $base_set->set_ical( include => [ uc('recur:'.$recur_str) ] ); 
+    $base_set->set_ical( include => [ uc('rrule:'.$recur_str) ] ); 
 
     return $base_set;
 }
