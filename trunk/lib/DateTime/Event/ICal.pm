@@ -261,8 +261,62 @@ sub _yearly_recurrence {
                 $by{days} =    $dtstart->day unless exists $by{days};
                 delete $$argsref{bymonthday};
             }
+
+    my $set_byday;
+    if ( exists $args{byday} )
+    {
+        my $freq = 'yearly';
+        $freq = 'monthly' if exists $args{bymonth};
+
+        my %by;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+
+        # process byday = "1FR" and "FR"
+        # $by{byday} =    $args{byday};
+        my @week_days;
+        my @indexed_week_days;
+        $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
+        for ( @{$args{byday}} ) {
+            if ( $_ =~ /\d/ ) 
+            {
+                        push @indexed_week_days, $_;
+            }
+            else 
+            {
+                        push @week_days, $_;
+            };
+        }
+        delete $$argsref{$_}
+            for qw( byday );
+        $set_byday = _recur_1fr( 
+            %by, byday => [ @indexed_week_days ], freq => $freq ) 
+            if @indexed_week_days;
+        if ( @week_days ) 
+        {
+            @week_days = map { $weekdays{$_} } @week_days;
+            my $set_days = DateTime::Event::Recurrence->weekly(
+                %by, days => [ @week_days ] );
+            if ( $set_byday )
+            {
+                $set_byday = $set_byday->union( $set_days );
+            }
+            else
+            {
+                $set_byday = $set_days;
+            }
+        }
+        
+        delete $by{byday};
+    }
+
     delete $$argsref{$_} 
-        for qw( interval bysecond byminute byhour );
+        for qw( interval byday bysecond byminute byhour );
+    return DateTime::Event::Recurrence->yearly( %by )->intersection( $set_byday ) if $set_byday;
     return DateTime::Event::Recurrence->yearly( %by );
 }
 
@@ -277,6 +331,7 @@ sub _recur_1fr {
     my $base_duration;
 
     # parse byday
+    $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
     for ( @{$args{byday}} ) 
     {
         my ( $count, $day_name ) = $_ =~ /(.*)(\w\w)/;

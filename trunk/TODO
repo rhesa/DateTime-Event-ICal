@@ -1,5 +1,7 @@
 TODO list for Perl module DateTime-Event-ICal
 
+* make yearly-byday a separate subroutine, use it into monthly-byday
+
 * optimize byday=>['we','fr'] - a lot!
   DONE:
     - byday with many options makes tests very slow 

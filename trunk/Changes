@@ -1,5 +1,8 @@
 Changes for DateTime-Event-ICal
 
+- bugfix for 'yearly-byday'.  Bug reported by John Bishop.
+- more tests for 'yearly-byday'
+
 0.0301  2003-08-11
 - rfc2445 test uses a proper 'print' subroutine
 
