@@ -513,7 +513,12 @@ DateTime::Event::ICal - Perl DateTime extension for computing rfc2445 recurrence
                          day    => 20,
                        );
 
- my $set = DateTime::Event::ICal->recur( %args );
+ my $set = DateTime::Event::ICal->recur( 
+      dtstart => $dt,
+      freq =>    'daily',
+      bymonth => [ 10, 12 ],
+      byhour =>  [ 10 ]
+ );
 
  my $dt_next = $set->next( $dt );
 
@@ -645,26 +650,10 @@ Month -1 is december.
 
 =head1 VERSION NOTES
 
-byday=1fr gives wrong results if byhour, byminute, or bysecond 
-have 2 or more options.
+Option C<byday => '1fr'> gives wrong results if one of
+byhour, byminute, or bysecond have 2 or more options.
 
-wkst is not implemented.
-
-no tests were made defining recurrences without dtstart.
-
-the effect of 'count' on a recurrence without dtstart is not defined.
-the effect of count == 0 is not defined.
-
-no tests were made using datetimes with timezones.
-
-mixing positive and negative arguments in the same list
-might give wrong results is the numbers are big enough
-to cause the datetimes to interleave.
-
-some arguments are not checked for overflow, 
-such as byyearday.
-
-'until' is not parsed. It should be parsed by DateTime::Format::ICal.
+Option C<wkst> is not implemented.
 
 =head1 AUTHOR
 
@@ -703,6 +692,9 @@ DateTime::Set - recurrences defined by callback subroutines
 DateTime::Event::Cron - recurrences defined by 'cron' rules
 
 DateTime::SpanSet 
+
+RFC2445 - Internet Calendaring and Scheduling Core Object Specification - 
+http://www.ietf.org/rfc/rfc2445.txt
 
 =cut
 1;

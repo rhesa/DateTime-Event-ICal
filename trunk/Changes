@@ -1,6 +1,9 @@
 Changes for DateTime-Event-ICal
 
-- byxxx
+0.00_02
+- bysetpos
+- count
+- by(units)
 
 0.00_01
 - base implementation:
