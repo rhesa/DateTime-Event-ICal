@@ -322,28 +322,57 @@ sub _recur_bysetpos {
     return DateTime::Set->from_recurrence (
         next =>
         sub {
+            return undef unless defined $_[0];
             my $self = $_[0]->clone;
-            # warn "bysetopos: next of ".$_[0]->datetime;
+            # warn "bysetpos: next of ".$_[0]->datetime;
             # print STDERR "    previous: ".$base_set->current( $_[0] )->datetime."\n";
             my $start = $base_set->current( $_[0] );
-          while(1) {
-            my $end   = $base_set->next( $start->clone );
-            # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
-            my $span = DateTime::Span->from_datetimes( 
+            while(1) {
+                my $end   = $base_set->next( $start->clone );
+                # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
+                my $span = DateTime::Span->from_datetimes( 
                           start => $start,
                           before => $end );
-            # print STDERR "    done span\n";
-            my $subset = $args{recurrence}->intersection( $span );
-            my @list = $subset->as_list;
-            # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
-            # select
-            @list = sort @list[ @{$args{bysetpos}} ];
-            # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
-            for ( @list ) {
-                return $_ if $_ > $self;
-            }
-            $start = $end;
-          }  # /while
+                # print STDERR "    done span\n";
+                my $subset = $args{recurrence}->intersection( $span );
+                my @list = $subset->as_list;
+                # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+                # select
+                @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
+                # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
+                for ( @list ) {
+                    return $_ if $_ > $self;
+                }
+                $start = $end;
+            }  # /while
+        },
+        previous =>
+        sub {
+            my $self = $_[0]->clone;
+            # warn "bysetpos: previous of ".$_[0]->datetime;
+            # print STDERR "    previous: ".$base_set->current( $_[0] )->datetime."\n";
+            my $start = $base_set->current( $_[0] );
+            my $end   = $base_set->next( $start->clone );
+            my $count = 10;
+            while(1) {
+                # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
+                my $span = DateTime::Span->from_datetimes(
+                          start => $start,
+                          before => $end );
+                # print STDERR "    done span\n";
+                my $subset = $args{recurrence}->intersection( $span );
+                my @list = $subset->as_list;
+                # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+                # select
+                @list = sort { $b <=> $a } @list[ @{$args{bysetpos}} ];
+                # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
+                for ( @list ) {
+                    return $_ if $_ < $self;
+                }
+                return undef unless $count--;
+                $end = $start;
+                $start = $base_set->previous( $start );
+            }  # /while
         }
     );
 }
