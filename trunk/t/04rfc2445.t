@@ -33,6 +33,10 @@ my $dt19980101T090000 = DateTime->new(
     year => 1998, month => 1, day => 1, hour => 9,
     # time_zone => 'US-Eastern',
  );
+my $dt19980201T000000 = DateTime->new(
+    year => 1998, month => 2, day => 1, 
+    # time_zone => 'US-Eastern',
+ );
 my $dt20000131T090000 = DateTime->new(
     year => 2000, month => 1, day => 31, hour => 9,
     # time_zone => 'US-Eastern',
@@ -47,6 +51,10 @@ my $period_1995_1999 = DateTime::Span->new(
 my $period_1995_1998 = DateTime::Span->new(
             start => $dt19950101, 
             end => $dt19990101->clone->subtract( years => 1 ) );
+
+my $period_1995_19980201 = DateTime::Span->new(
+            start => $dt19950101,
+            end =>   $dt19980201T000000 );
 
 my $period_1995_2001 = DateTime::Span->new(
             start => $dt19950101,
@@ -347,8 +355,6 @@ $title="***  Weekly for 10 occurrence  ***";
         '1997-10-28T09:00:00,1997-11-04T09:00:00',
         $title);
 
-__END__
-
 
 $title="***  Weekly until December 24, 1997  ***";
 #
@@ -359,11 +365,13 @@ $title="***  Weekly until December 24, 1997  ***";
 #         (1997 9:00 AM EST)October 28;November 4,11,18,25;
 #                           December 2,9,16,23
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY', UNTIL=>'1997-12-24T00:00:00' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000 ,
+            freq =>     'weekly',
+            until =>    $dt19971224T000000,
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-09T09:00:00,' .
         '1997-09-16T09:00:00,1997-09-23T09:00:00,1997-09-30T09:00:00,' .
@@ -375,6 +383,7 @@ $title="***  Weekly until December 24, 1997  ***";
         '1997-12-16T09:00:00,1997-12-23T09:00:00',
         $title);
 
+
 $title="***  Every other week - forever  ***";
 #
 #     DTSTART;TZID=US-Eastern:19970902T090000
@@ -385,11 +394,14 @@ $title="***  Every other week - forever  ***";
 #         (1998 9:00 AM EST)January 6,20;February
 #     ...
 #
-    # make a period from 1995 until 1998-02
-    $period = Date::Set->period( time => ['19950101Z', '19980201Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY', INTERVAL=>2, WKST=>'SU' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000 ,
+            freq =>     'weekly',
+            interval => 2,
+            wkst =>     'su',   # doesn't make difference here
+            )
+            ->intersection( $period_1995_19980201 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-16T09:00:00,1997-09-30T09:00:00,' .
         '1997-10-14T09:00:00,' .
@@ -400,9 +412,9 @@ $title="***  Every other week - forever  ***";
         $title);
 
 
-#### TEST 11 ##########
+__END__
 
-# $Date::Set::DEBUG = 1;
+#### TEST 11 ##########
 
 $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
 #
