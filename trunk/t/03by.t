@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use DateTime;
 use DateTime::Event::ICal;
@@ -9,6 +9,8 @@ use DateTime::Event::ICal;
     my $dt1 = new DateTime( year => 2003, month => 4, day => 28,
                            hour => 12, minute => 10, second => 45,
                            time_zone => 'UTC' );
+
+    # $dt1 is monday, week 18
 
     my ( $set, @dt, $r );
 
@@ -53,7 +55,22 @@ use DateTime::Event::ICal;
                          end => $dt1->clone->add( years => 1 ) );
     $r = join(' ', map { $_->datetime } @dt);
     is( $r,
-        '2004-01-08T12:10:45 2004-03-18T12:10:45',
+        '2004-01-05T12:10:45 2004-03-15T12:10:45',
+        "yearly, dtstart, byweekno" );
+
+    # CHANGE DTSTART WEEKDAY
+
+    $set = DateTime::Event::ICal->recur( 
+       freq =>       'yearly',
+       dtstart =>    $dt1->clone->add( days => 1 ),
+       byweekno =>    [ 2, 12 ],
+    );
+
+    @dt = $set->as_list( start => $dt1,
+                         end => $dt1->clone->add( years => 1 ) );
+    $r = join(' ', map { $_->datetime } @dt);
+    is( $r,
+        '2004-01-06T12:10:45 2004-03-16T12:10:45',
         "yearly, dtstart, byweekno" );
 
 }

@@ -92,7 +92,7 @@ sub recur {
         my %by2 = %by;   # reuse hour/min/sec components
         $by2{days} = exists $args{bymonthday} ?
                          $args{bymonthday} :
-                         ( $args{freq} eq 'daily' ?
+                         ( $args{freq} eq 'daily' || $args{freq} eq 'yearly' ?
                              [ 1 .. 31 ] :
                              $dtstart->day );
         if ( exists $args{bymonth} ) 
@@ -120,7 +120,7 @@ sub recur {
                          fr => 5, sa => 6, su => 7 );
 
         $by2{days} = exists $args{byday} ?
-                         map { $weekdays{$_} } @{$args{byday}} :
+                         [ map { $weekdays{$_} } @{$args{byday}} ] :
                          ( $args{freq} eq 'daily' ?
                              [ 1 .. 7 ] :
                              $dtstart->day_of_week );
