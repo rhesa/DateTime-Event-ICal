@@ -8,4 +8,7 @@ TODO
 lib/DateTime/Event/ICal.pm
 t/00load.t
 t/01sanity.t
+t/02interval.t
+t/03by.t
+t/04rfc2445.t
 

@@ -1,9 +1,11 @@
 Changes for DateTime-Event-ICal
 
+0.01    2003-05-23
+- tests all expressions mentioned in RFC2445
 - bysetpos is 2x faster
 - fixed the order of operations: bysetpos x span
 
-0.00_02
+0.00_02    2003-05-12
 - bysetpos
 - count
 - by(units)
