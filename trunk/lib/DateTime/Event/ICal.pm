@@ -363,7 +363,11 @@ sub _recur_bysetpos {
     # my $names = $freqs{ $args{freq} }{names};
     # my $name =  $freqs{ $args{freq} }{name};
     no strict "refs";
-    my $base_set = &{"DateTime::Event::Recurrence::$args{freq}"}();
+
+    my $freq = $args{freq};
+
+    my $base_set = DateTime::Event::Recurrence->$freq();
+
     # die "invalid freq parameter ($args{freq})" 
     #    unless exists $DateTime::Event::Recurrence::truncate_interval{ $names };
     #my $truncate_interval_sub = 
@@ -379,6 +383,7 @@ sub _recur_bysetpos {
     #     unless @{$args{bysetpos}};
     # print STDERR "bysetpos:  [@{$args{bysetpos}}]\n";
     for ( @{$args{bysetpos}} ) { $_-- if $_ > 0 }
+
     return DateTime::Set->from_recurrence (
         next =>
         sub {
@@ -494,9 +499,11 @@ sub recur {
         exists $args{dtstart} ?
             DateTime::Span->from_datetimes( start => $args{dtstart} ) :
             DateTime::Set->empty_set->complement;
+
     $span = $span->complement( 
                 DateTime::Span->from_datetimes( after => delete $args{dtend} )
             ) if exists $args{dtend};
+
     $span = $span->complement(
                 DateTime::Span->from_datetimes( after => delete $args{until} )
             ) if exists $args{until};
@@ -683,101 +690,117 @@ given recurrence.
 
   my $set = DateTime::Event::ICal->recur( %args );
 
+This method takes parameters which correspond to the rule parts
+specified in section 4.3.10 of RFC 2445.  Rather than rewrite that RFC
+here, you are encouraged to read that first if you want to understand
+what all these parameters represent.
+
 =over 4
 
 =item * dtstart
 
-A DateTime object. Start date.
+A DateTime object, which is the start date.
 
-C<dtstart> is not included in the recurrence, unless it satisfy the rule.
+This datetime is not included in the recurrence, unless it satisfies
+the recurrence's rules.
 
-The set can thus be used for creating exclusion rules (rfc2445 C<exrule>),
-which don't include C<dtstart>.
+A set can thus be used for creating exclusion rules (rfc2445
+C<exrule>), which don't include C<dtstart>.
 
-=item * dtend
+=item * until
 
-A DateTime object. End date.
+A DateTime object which specifies the recurrence's end date.  Can also
+be specified as "dtend".
+
+=item * count
+
+A positive number which indicate the total number of recurrences.
+Giving both a "count" and an "until" parameter is pointless, though it
+is currently allowed.
 
 =item * freq
 
 One of:
 
-   'yearly', 'monthly', 'weekly', 'daily', 
-   'hourly', 'minutely', 'secondly'
+   "yearly", "monthly", "weekly", "daily",
+   "hourly", "minutely", "secondly"
 
-=item * until
-
-A DateTime object. End date. 
-
-=item * count
-
-A positive number. 
-Total number of recurrences, after the rule is evaluated.
+See the C<DateTime::Event::Recurrence> documentation for more details
+on what these mean.
 
 =item * interval
 
-A positive number, starting in 1. Default is 1.
+The interval between recurrences.  This is a multiplier for the value
+specified by "freq".  It defaults to 1.
 
-Example: 
-
-  freq=yearly;interval=2
-
-events on this recurrence occur each other year.
+So if you specify a "freq" of "yearly" and an "interval" of 3, that
+means a recurrence that occurs every three years.
 
 =item * wkst
 
-Week start day. Default is monday ('mo').
+Week start day.  This can be one of: "mo", "tu", "we", "th", "fr",
+"sa", "su".  The default is monday ("mo").
 
-=item * bysetpos => [ list ]
-
-Positive or negative numbers, without zero.
-
-Example: 
-
-  freq=yearly;bysetpos=2 
-
-inside a yearly recurrence, select 2nd occurence within each year.
+B<Note: this parameter is not yet implemented>
 
 =item * bysecond => [ list ], byminute => [ list ], byhour => [ list ]
 
-Positive or negative numbers, including zero.
+This should be one or more positive or numbers, specified as a scalar
+or array reference.  Each number represents a second/minute/hour.
+
+See RFC 2445, section 4.3.10 for more details.
 
 =item * byday => [ list ]
 
-Day of week: one or more of:
-
- 'mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'
+This should be a scalar or array reference containing days of the
+week, specified as "mo", "tu", "we", "th", "fr", "sa", "su"
 
 The day of week may have a prefix:
 
- '1tu',  # the first tuesday of month or year
- '-2we'  # the second to last wednesday of month or year
+ "1tu",  # the first tuesday of month or year
+ "-2we"  # the second to last wednesday of month or year
+
+See RFC 2445, section 4.3.10 for more details.
 
 =item * bymonthday => [ list ], byyearday => [ list ]
 
-Positive or negative numbers, without zero.
-Days start in 1.
+A scalar or array reference containing positive or negative numbers,
+but not zero.  For "bymonthday", the allowed ranges are -31 to -1.
+For "byyearday", the allowed ranges are -366 to -1, and 1 to 366.
 
 Day -1 is last day of month or year.
 
+See RFC 2445, section 4.3.10 for more details.
+
 =item * byweekno => [ list ]
 
-Week number. 
-Positive or negative numbers, without zero.
-First week of year is week 1. 
+A scalar or array reference containing positive or negative numbers,
+but not zero.  The allowed ranges are -53 to -1, and 1 to 53.
 
-Default week start day is monday.
+The first week of year is week 1.
+
+The default week start day is monday.
 
 Week -1 is the last week of year.
 
+See RFC 2445, section 4.3.10 for more details.
+
 =item * bymonth => [ list ]
 
-Months, numbered 1 until 12.
-Positive or negative numbers, without zero.
+A scalar or array reference containing positive or negative numbers,
+from -12 to -1 and 1 to 12.
 
-Month -1 is december.
+Month -1 is December.
 
-=back
+See RFC 2445, section 4.3.10 for more details.
+
+=item * bysetpos => [ list ]
+
+This can be either a scalar or an array reference of positive and
+negative numbers from -366 to -1, and 1 to 366.  This parameter is
+used in conjuction with one of the other "by..." parameters.
+
+See RFC 2445, section 4.3.10 for more details.
 
 =back
 
@@ -819,12 +842,12 @@ DateTime::Format::ICal - can parse rfc2445 recurrences
 
 DateTime::Set - recurrences defined by callback subroutines
 
-DateTime::Event::Cron - recurrences defined by 'cron' rules
+DateTime::Event::Cron - recurrences defined by "cron" rules
 
-DateTime::SpanSet 
+DateTime::SpanSet
 
-RFC2445 - Internet Calendaring and Scheduling Core Object Specification - 
-http://www.ietf.org/rfc/rfc2445.txt
+RFC2445 - Internet Calendaring and Scheduling Core Object
+Specification - http://www.ietf.org/rfc/rfc2445.txt
 
 =cut
 1;
