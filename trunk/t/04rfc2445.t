@@ -43,6 +43,11 @@ my $dt19970610T090000 = DateTime->new(
     # time_zone => 'US-Eastern',
  );
 
+my $dt19970805T090000 = DateTime->new(
+    year => 1997, month => 8, day => 5, hour => 9,
+    # time_zone => 'US-Eastern',
+ );
+
 my $dt19970902T090000 = DateTime->new( 
     year => 1997, month => 9, day => 2, hour => 9,
     # time_zone => 'US-Eastern',
@@ -52,6 +57,11 @@ my $dt19970904T090000 = $dt19970902T090000->clone->add( days => 2 );
 
 my $dt19970905T090000 = DateTime->new( 
     year => 1997, month => 9, day => 5, hour => 9,
+    # time_zone => 'US-Eastern',
+ );
+
+my $dt19970902T170000 = DateTime->new(
+    year => 1997, month => 9, day => 2, hour => 17,
     # time_zone => 'US-Eastern',
  );
 
@@ -97,6 +107,10 @@ my $period_1995_19980201 = DateTime::Span->new(
 my $period_1995_19980301 = DateTime::Span->new(
             start => $dt19950101,
             end =>   $dt19980201T000000->clone->add( months => 1 ) );
+
+my $period_1995_19980401 = DateTime::Span->new(
+            start => $dt19950101,
+            end =>   $dt19980201T000000->clone->add( months => 2 ) );
 
 my $period_1995_2000 = DateTime::Span->new(
             start => $dt19950101,
@@ -1149,7 +1163,6 @@ SKIP: {
         '1997-09-04T09:00:00,1997-10-07T09:00:00,1997-11-06T09:00:00', $title);
 }
 
-__END__
 $title="***  The 2nd to last weekday of the month:  ***";
 #
 #     DTSTART;TZID=US-Eastern:19970929T090000
@@ -1160,16 +1173,21 @@ $title="***  The 2nd to last weekday of the month:  ***";
 #         (1998 9:00 AM EST)January 29;February 26;March 30
 #     ...
 #
-    # make a period from 1995 until 199804-
-    $period = Date::Set->period( time => ['19950101Z', '19980401Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-29T09:00:00' )
-        ->recur_by_rule( FREQ=>'MONTHLY', BYDAY=>[ qw(MO TU WE TH FR) ], BYSETPOS=>[-2] )
-        ->occurrences( period => $period );
+SKIP: {
+    skip "Infinite loop", 1 if 1;
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970904T090000 ,
+            freq =>       'monthly',
+            byday =>      [ 'mo', 'tu', 'we', 'th', 'fr' ],
+            bysetpos =>   -2 )
+            ->intersection( $period_1995_19980401 );
+
     is("".$a->{set}, 
         '1997-09-29T09:00:00,1997-10-30T09:00:00,' .
         '1997-11-27T09:00:00,1997-12-30T09:00:00,1998-01-29T09:00:00,' .
         '1998-02-26T09:00:00,1998-03-30T09:00:00', $title);
-
+}
 
 $title="***  Every 3 hours from 9:00 AM to 5:00 PM on a specific day  ***";
 #
@@ -1178,11 +1196,13 @@ $title="***  Every 3 hours from 9:00 AM to 5:00 PM on a specific day  ***";
 #
 #     ==> (September 2, 1997 EDT)09:00,12:00,15:00
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=HOURLY;INTERVAL=3;UNTIL=1997-09-02T17:00:00' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970902T090000 ,
+            freq =>       'hourly',
+            interval =>   3,
+            until =>      $dt19970902T170000 )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-02T12:00:00,1997-09-02T15:00:00', $title);
 
@@ -1192,19 +1212,21 @@ $title="***  Every 15 minutes for 6 occurrences  ***";
 #     recur_by_rule:FREQ=MINUTELY;INTERVAL=15;COUNT=6
 #
 #     ==> (September 2, 1997 EDT)09:00,09:15,' .
-        '09:30,09:45,10:00,10:15
+#        '09:30,09:45,10:00,10:15
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19970903Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=MINUTELY;INTERVAL=15;COUNT=6' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970902T090000 ,
+            freq =>       'minutely',
+            interval =>   15,
+            count =>      6 )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-02T09:15:00,' .
-        '1997-09-02T09:30:00,1997-09-02T09:45:00,1997-09-02T10:00:00,1997-09-02T10:15:00',
+        '1997-09-02T09:30:00,1997-09-02T09:45:00,' .
+        '1997-09-02T10:00:00,1997-09-02T10:15:00',
     $title);
 
-# $Date::Set::DEBUG = 1;
 
 $title="***  Every hour and a half for 4 occurrences  ***";
 #
@@ -1213,11 +1235,13 @@ $title="***  Every hour and a half for 4 occurrences  ***";
 #
 #     ==> (September 2, 1997 EDT)09:00,10:30;12:00;13:30
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19970903Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=MINUTELY;INTERVAL=90;COUNT=4' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970902T090000 ,
+            freq =>       'minutely',
+            interval =>   90,
+            count =>      4 )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-02T10:30:00,' .
         '1997-09-02T12:00:00,1997-09-02T13:30:00', $title);
@@ -1233,42 +1257,85 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
 #     recur_by_rule:FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16
 #
 #     ==> (September 2, 1997 EDT)9:00,9:20,' .
-        '9:40,10:00,10:20,
+#        '9:40,10:00,10:20,
 #                                ... 16:00,16:20,16:40
 #         (September 3, 1997 EDT)9:00,9:20,' .
-        '9:40,10:00,10:20,
+#        '9:40,10:00,10:20,
 #                               ...16:00,16:20,16:40
 #     ...
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19970904Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=DAILY;BYHOUR=9,10,11,12,13,14,15,16;BYMINUTE=0,20,40' )
-        ->occurrences( period => $period );
+
+SKIP: {
+    skip "Takes too long", 1 if 1;
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970902T090000 ,
+            freq =>       'daily',
+            byhour =>     [ 9,10,11,12,13,14,15,16 ],
+            byminute =>   [ 0,20,40 ] )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
         '1997-09-02T09:40:00,1997-09-02T10:00:00,1997-09-02T10:20:00,' .
-    '1997-09-02T10:40:00,1997-09-02T11:00:00,' .
+        '1997-09-02T10:40:00,1997-09-02T11:00:00,' .
         '1997-09-02T11:20:00,1997-09-02T11:40:00,1997-09-02T12:00:00,' .
-    '1997-09-02T12:20:00,1997-09-02T12:40:00,' .
+        '1997-09-02T12:20:00,1997-09-02T12:40:00,' .
         '1997-09-02T13:00:00,1997-09-02T13:20:00,1997-09-02T13:40:00,' .
-    '1997-09-02T14:00:00,1997-09-02T14:20:00,' .
+        '1997-09-02T14:00:00,1997-09-02T14:20:00,' .
         '1997-09-02T14:40:00,1997-09-02T15:00:00,1997-09-02T15:20:00,' .
-    '1997-09-02T15:40:00,1997-09-02T16:00:00,' .
+        '1997-09-02T15:40:00,1997-09-02T16:00:00,' .
         '1997-09-02T16:20:00,1997-09-02T16:40:00,' .
 
-    '1997-09-03T09:00:00,1997-09-03T09:20:00,' .
+        '1997-09-03T09:00:00,1997-09-03T09:20:00,' .
         '1997-09-03T09:40:00,1997-09-03T10:00:00,1997-09-03T10:20:00,' .
-    '1997-09-03T10:40:00,1997-09-03T11:00:00,' .
+        '1997-09-03T10:40:00,1997-09-03T11:00:00,' .
         '1997-09-03T11:20:00,1997-09-03T11:40:00,1997-09-03T12:00:00,' .
-    '1997-09-03T12:20:00,1997-09-03T12:40:00,' .
+        '1997-09-03T12:20:00,1997-09-03T12:40:00,' .
         '1997-09-03T13:00:00,1997-09-03T13:20:00,1997-09-03T13:40:00,' .
-    '1997-09-03T14:00:00,1997-09-03T14:20:00,' .
+        '1997-09-03T14:00:00,1997-09-03T14:20:00,' .
         '1997-09-03T14:40:00,1997-09-03T15:00:00,1997-09-03T15:20:00,' .
-    '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
+        '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
         '1997-09-03T16:20:00,1997-09-03T16:40:00',
     $title);
+}
 
+#     recur_by_rule:FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16
+
+SKIP: {
+    skip "Not implemented", 1 if 1;
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970902T090000 ,
+            freq =>       'minutely',
+            interval =>   20,
+            byhour =>     [ 9,10,11,12,13,14,15,16 ], )
+            ->intersection( $period_1995_1999 );
+
+    is("".$a->{set},
+        '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
+        '1997-09-02T09:40:00,1997-09-02T10:00:00,1997-09-02T10:20:00,' .
+        '1997-09-02T10:40:00,1997-09-02T11:00:00,' .
+        '1997-09-02T11:20:00,1997-09-02T11:40:00,1997-09-02T12:00:00,' .
+        '1997-09-02T12:20:00,1997-09-02T12:40:00,' .
+        '1997-09-02T13:00:00,1997-09-02T13:20:00,1997-09-02T13:40:00,' .
+        '1997-09-02T14:00:00,1997-09-02T14:20:00,' .
+        '1997-09-02T14:40:00,1997-09-02T15:00:00,1997-09-02T15:20:00,' .
+        '1997-09-02T15:40:00,1997-09-02T16:00:00,' .
+        '1997-09-02T16:20:00,1997-09-02T16:40:00,' .
+
+        '1997-09-03T09:00:00,1997-09-03T09:20:00,' .
+        '1997-09-03T09:40:00,1997-09-03T10:00:00,1997-09-03T10:20:00,' .
+        '1997-09-03T10:40:00,1997-09-03T11:00:00,' .
+        '1997-09-03T11:20:00,1997-09-03T11:40:00,1997-09-03T12:00:00,' .
+        '1997-09-03T12:20:00,1997-09-03T12:40:00,' .
+        '1997-09-03T13:00:00,1997-09-03T13:20:00,1997-09-03T13:40:00,' .
+        '1997-09-03T14:00:00,1997-09-03T14:20:00,' .
+        '1997-09-03T14:40:00,1997-09-03T15:00:00,1997-09-03T15:20:00,' .
+        '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
+        '1997-09-03T16:20:00,1997-09-03T16:40:00',
+    $title);
+}
 
 $title="***  An example where the days generated makes a difference because of WKST  ***";
 #
@@ -1277,16 +1344,18 @@ $title="***  An example where the days generated makes a difference because of W
 #
 #     ==> (1997 EDT)Aug 5,10,19,24
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-08-05T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY', INTERVAL=>2, COUNT=>4, BYDAY=>[ qw(TU SU) ], WKST=>'MO' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970805T090000 ,
+            freq =>       'weekly',
+            interval =>   2,
+            count =>      4,
+            byday =>      [ 'tu', 'su' ], 
+            wkst =>       'mo' )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-08-05T09:00:00,1997-08-10T09:00:00,' .
         '1997-08-19T09:00:00,1997-08-24T09:00:00', $title);
-
-
 
 $title="***  changing only WKST from MO to SU, yields different results...  ***";
 #
@@ -1294,15 +1363,24 @@ $title="***  changing only WKST from MO to SU, yields different results...  ***"
 #     recur_by_rule:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU
 #     ==> (1997 EDT)August 5,17,19,31
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-08-05T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY', INTERVAL=>2, COUNT=>4, BYDAY=>[ qw(TU SU) ], WKST=>'SU' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>    $dt19970805T090000 ,
+            freq =>       'weekly',
+            interval =>   2,
+            count =>      4,
+            byday =>      [ 'tu', 'su' ],
+            wkst =>       'su' )
+            ->intersection( $period_1995_1999 );
+
+TODO: {
+    local $TODO = 'WKST not implemented';
+
     is("".$a->{set}, 
         '1997-08-05T09:00:00,1997-08-17T09:00:00,' .
         '1997-08-19T09:00:00,1997-08-31T09:00:00', $title);
+}
 
+__END__
     # another test using this result:
     is( "" . $a->exclude_by_date( list => ['1997-08-17T09:00:00', '1997-08-31T09:00:00'] ) ,
         '1997-08-05T09:00:00,1997-08-19T09:00:00', "***  EXDATE removing 2 days  ***" );
@@ -1311,9 +1389,6 @@ $title="***  changing only WKST from MO to SU, yields different results...  ***"
     is( "" . $a->recur_by_date( list => ['19970817Z', '19970831Z'] ) ,
         '1997-08-05T09:00:00,19970817Z,1997-08-17T09:00:00,' .
         '1997-08-19T09:00:00,19970831Z,1997-08-31T09:00:00', "***  RDATE adding 2 days  ***" );
-
-# $Set::Infinite::PRETTY_PRINT = 1;
-# $Set::Infinite::TRACE = 1;
 
 $a = Date::Set->event(
     dtstart => '1970-03-29T02:00:00',
