@@ -16,6 +16,9 @@ $VERSION = '0.00_02';
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 
+my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4,
+                 fr => 5, sa => 6, su => 7 );
+
 # debugging method
 sub _param_str {
     my %param = @_;
@@ -169,6 +172,31 @@ sub recur {
             $base_set = DateTime::Event::Recurrence->monthly( %by );
         }
     }
+    elsif ( $args{freq} eq 'weekly' ) {
+        unless ( grep { /by/ &&
+                        !/byday/ &&
+                        !/bysecond/ && !/byminute/ && !/byhour/
+                      } keys %args )
+        {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+
+            # TODO: -1fr should work too
+            $by{days} = exists $args{byday} ?
+                        [ map { $weekdays{$_} } @{$args{byday}} ] :
+                        $dtstart->day_of_week ;
+
+            # warn "weekly recur:"._param_str(%by);
+
+            $base_set = DateTime::Event::Recurrence->weekly( %by );
+        }
+    }
     elsif ( $args{freq} eq 'yearly' ) {
         unless ( grep { /by/ &&
                         !/bymonth/ &&   # ... !/bymonthday/ &&
@@ -276,8 +304,6 @@ sub recur {
     {
         my %by2 = %by;   # reuse hour/min/sec components
         # TODO: indexed "-1fr" argument not supported yet
-        my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4, 
-                         fr => 5, sa => 6, su => 7 );
 
         $by2{days} = exists $args{byday} ?
                          [ map { $weekdays{$_} } @{$args{byday}} ] :
