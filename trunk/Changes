@@ -1,5 +1,8 @@
 Changes for DateTime-Event-ICal
 
+0.02    2003-07-02
+- provides hints for DT::Format::ICal format_recurrence
+
 0.01    2003-05-23
 - tests all expressions mentioned in RFC2445
 - bysetpos is 2x faster

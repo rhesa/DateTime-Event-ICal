@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -446,6 +446,12 @@ sub recur {
 
     # warn "recur:"._param_str(%args);
 
+    # stringify the argument list - will be used by format_recurrence !
+    my %tmp_args = @_;
+    delete $tmp_args{dtstart};
+    delete $tmp_args{dtend};
+    my $recur_str = _param_str(%tmp_args);
+
     # dtstart / dtend / until
     my $span = 
         exists $args{dtstart} ?
@@ -582,6 +588,7 @@ sub recur {
     my @args = %args;
     die "these arguments are not implemented: "._param_str(%args) if @args;
 
+    $base_set->{as_ical} = [ uc('recur:'.$recur_str) ];
     return $base_set;
 }
 
