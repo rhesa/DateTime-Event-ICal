@@ -1,3 +1,5 @@
+#!/bin/perl -w
+
 use strict;
 
 use Test::More tests => 1;
@@ -22,7 +24,6 @@ use DateTime::Event::ICal;
     $set = DateTime::Event::ICal->recur( 
        freq => 'minutely',
        dtstart => $dt1,
-       dtend => $dt1->clone->add( minutes => 20 ),
        interval => 3,
        count => 3 );
 

@@ -1,3 +1,4 @@
+#!/bin/perl -w
 
 use Test::More;
 
