@@ -64,6 +64,14 @@ my $period_1995_19980201 = DateTime::Span->new(
             start => $dt19950101,
             end =>   $dt19980201T000000 );
 
+my $period_1995_19980301 = DateTime::Span->new(
+            start => $dt19950101,
+            end =>   $dt19980201T000000->clone->add( months => 1 ) );
+
+my $period_1995_2000 = DateTime::Span->new(
+            start => $dt19950101,
+            end => $dt19990101->clone->add( years => 1 ) );
+
 my $period_1995_2001 = DateTime::Span->new(
             start => $dt19950101,
             end => $dt19990101->clone->add( years => 2 ) );
@@ -650,7 +658,7 @@ $title="***  Monthly on the second to last Monday of the month for 6 months  ***
     $title);
 
 
-__END__
+
 
 $title="***  Monthly on the third to the last day of the month, forever  ***";
 #
@@ -662,18 +670,22 @@ $title="***  Monthly on the third to the last day of the month, forever  ***";
 #         (1998 9:00 AM EST)January 29;February 26
 #     ...
 #
-    # make a period from 1995 until 1998-03
-    $period = Date::Set->period( time => ['19950101Z', '19980301Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-28T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=MONTHLY;BYMONTHDAY=-3' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970905T090000,
+            freq =>     'monthly',
+            bymonthday =>  [ -3 ],
+            )
+            ->intersection( $period_1995_19980301 );
+
     is("".$a->{set}, 
-        '1997-09-28T09:00:00,' .
+    '1997-09-28T09:00:00,' .
     '1997-10-29T09:00:00,1997-11-28T09:00:00,1997-12-29T09:00:00,' .
     '1998-01-29T09:00:00,1998-02-26T09:00:00',
     $title);
 
-$Date::Set::DEBUG = 0;
+
+
+
 
 $title="***  Monthly on the 2nd and 15th of the month for 10 occurrences  ***";
 #
@@ -684,11 +696,14 @@ $title="***  Monthly on the 2nd and 15th of the month for 10 occurrences  ***";
 #         (1997 9:00 AM EST)November 2,15;December 2,15
 #         (1998 9:00 AM EST)January 2,15
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=MONTHLY;COUNT=10;BYMONTHDAY=2,15' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000,
+            freq =>     'monthly',
+            count =>    10,
+            bymonthday =>  [ 2, 15 ],
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-15T09:00:00,' .
     '1997-10-02T09:00:00,1997-10-15T09:00:00,' .
@@ -696,6 +711,8 @@ $title="***  Monthly on the 2nd and 15th of the month for 10 occurrences  ***";
     '1997-12-02T09:00:00,1997-12-15T09:00:00,' .
     '1998-01-02T09:00:00,1998-01-15T09:00:00',
     $title);
+
+
 
 $title="***  Monthly on the first and last day of the month for 10 occurrences  ***";
 #
@@ -706,11 +723,14 @@ $title="***  Monthly on the first and last day of the month for 10 occurrences  
 #         (1997 9:00 AM EST)October 31;November 1,30;December 1,31
 #         (1998 9:00 AM EST)January 1,31;February 1
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-30T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=MONTHLY;COUNT=10;BYMONTHDAY=1,-1' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970905T090000,
+            freq =>     'monthly',
+            count =>    10,
+            bymonthday =>  [ 1, -1 ],
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-30T09:00:00,1997-10-01T09:00:00,' .
     '1997-10-31T09:00:00,1997-11-01T09:00:00,1997-11-30T09:00:00,' .
@@ -718,6 +738,7 @@ $title="***  Monthly on the first and last day of the month for 10 occurrences  
     '1998-01-01T09:00:00,1998-01-31T09:00:00,' .
     '1998-02-01T09:00:00',
     $title);
+
 
 
 $title="***  Every 18 months on the 10th thru 15th of the month for 10 occurrences  ***";
@@ -728,18 +749,22 @@ $title="***  Every 18 months on the 10th thru 15th of the month for 10 occurrenc
 #     ==> (1997 9:00 AM EDT)September 10,11,12,13,14,15
 #         (1999 9:00 AM EST)March 10,11,12,13
 #
-    # make a period from 1997 until 2000
-    $period = Date::Set->period( time => ['19970101Z', '20000101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-10T09:00:00' );
-    $a = $a->recur_by_rule( FREQ=>'MONTHLY', INTERVAL=>18, COUNT=>10, BYMONTHDAY=>[10,11,12,13,14,15] );
-    $a = $a->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970905T090000,
+            freq =>     'monthly',
+            interval => 18,
+            count =>    10,
+            bymonthday =>  [ 10 .. 15 ],
+            )
+            ->intersection( $period_1995_2000 );
+
     is("".$a->{set}, 
         '1997-09-10T09:00:00,1997-09-11T09:00:00,' .
-        '1997-09-12T09:00:00,1997-09-13T09:00:00,1997-09-14T09:00:00,1997-09-15T09:00:00,' .
+        '1997-09-12T09:00:00,1997-09-13T09:00:00,' .
+        '1997-09-14T09:00:00,1997-09-15T09:00:00,' .
         '1999-03-10T09:00:00,1999-03-11T09:00:00,' .
         '1999-03-12T09:00:00,1999-03-13T09:00:00'
         , $title);
-
 
 
 $title="***  Every Tuesday, every other month  ***";
@@ -751,11 +776,14 @@ $title="***  Every Tuesday, every other month  ***";
 #         (1997 9:00 AM EST)November 4,11,18,25
 #         (1998 9:00 AM EST)January 6,13,20,27;March 3,10,17,24,31
 #           ...
-    # make a period from 1997 until 1999
-    $period = Date::Set->period( time => ['19970101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( FREQ=>'MONTHLY', INTERVAL=>2, BYDAY=>[ qw(TU) ] )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>     $dt19970902T090000,
+            freq =>        'monthly',
+            interval =>    2,
+            byday =>       [ 'tu' ],
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-09T09:00:00,' .
         '1997-09-16T09:00:00,1997-09-23T09:00:00,1997-09-30T09:00:00,' .
@@ -773,7 +801,7 @@ $title="***  Every Tuesday, every other month  ***";
         '1998-11-10T09:00:00,1998-11-17T09:00:00,1998-11-24T09:00:00'
         , $title);
 
-
+__END__
 
 $title="***  Yearly in June and July for 10 occurrences  ***";
 #

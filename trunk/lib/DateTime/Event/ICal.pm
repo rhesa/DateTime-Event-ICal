@@ -156,11 +156,31 @@ sub _monthly_recurrence {
                 $by{days} =    $args{bymonthday};
             }
             elsif ( exists $args{byday} )
-            {   # "1FR"
-                $by{byday} =    $args{byday};
+            {   
+                # process byday = "1FR" and "FR"
+                my @week_days;
+                my @indexed_week_days;
+                for ( @{$args{byday}} ) { 
+                    if ( $_ =~ /\d/ ) {
+                        push @indexed_week_days, $_;
+                    }
+                    else {
+                        push @week_days, $_;
+                    };
+                }
                 delete $$argsref{$_} 
                     for qw( interval bysecond byminute byhour byday );
-                return _recur_1fr( %by, freq => 'monthly' );
+                # $$argsref{byday} = \@week_days if @week_days;
+                # warn "week days @week_days indexed @indexed_week_days";
+                for my $day ( @week_days ) {
+                    push @indexed_week_days, 
+                         map { $_ . $day } qw( 1 2 3 -1 -2 );
+                }
+                # warn "week days @week_days indexed @indexed_week_days";
+                return _recur_1fr( %by, freq => 'monthly', 
+                                   byday => \@indexed_week_days ) 
+                       if @indexed_week_days;
+                die 'no byday args';
             }
             else
             {

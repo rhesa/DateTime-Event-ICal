@@ -3,6 +3,7 @@ TODO list for Perl module DateTime-Event-ICal
 * "byday -2 friday"
   - use yearly;-1su to define 'wkst' !
   - test overflow
+  - need some 'interval' and 'dtstart' tests
 
 * the implementation of 'select' in Set::Infinite is incomplete
   and doesn't have the 'last' attribute. -- should be implemented!
