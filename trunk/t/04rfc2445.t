@@ -501,7 +501,6 @@ $title="***  Every other week on Monday, Wednesday and Friday until December 24 
     '1997-12-12T09:00:00,1997-12-22T09:00:00',
     $title);
 
-__END__
 
 ######## TEST 14
 
@@ -512,15 +511,24 @@ $title="***  Every other week on Tuesday and Thursday, for 8 occurrences  ***";
 #
 #     ==> (1997 9:00 AM EDT)September 2,4,16,18,30;October 2,14,16
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000,
+            freq =>     'weekly',
+            interval => 2,
+            count =>    8,
+            wkst =>     'su',
+            byday =>    [ 'tu', 'th' ],
+            )
+            ->union( $dt19970902T090000 )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
     '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
-        '1997-09-16T09:00:00,1997-09-18T09:00:00,1997-09-30T09:00:00,' .
-    '1997-10-02T09:00:00,1997-10-14T09:00:00,1997-10-16T09:00:00', $title);
+    '1997-09-16T09:00:00,1997-09-18T09:00:00,1997-09-30T09:00:00,' .
+    '1997-10-02T09:00:00,1997-10-14T09:00:00,1997-10-16T09:00:00', 
+    $title);
+
+__END__
 
 #### TEST 15
 
