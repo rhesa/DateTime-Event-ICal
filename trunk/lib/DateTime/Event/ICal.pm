@@ -480,6 +480,8 @@ given recurrence.
 
 =item * dtstart
 
+A DateTime object. Start date.
+
 C<dtstart> is not included in the recurrence, unless it satisfy the rule.
 
 The set can thus be used for creating exclusion rules (rfc2445 C<exrule>),
@@ -487,21 +489,51 @@ which don't include C<dtstart>.
 
 =item * dtend
 
+A DateTime object. End date.
+
 =item * freq
+
+One of:
+
+   'yearly', 'monthly', 'weekly', 'daily', 
+   'hourly', 'minutely', 'secondly'
 
 =item * until
 
+A DateTime object. End date. 
+
 =item * count
+
+A positive number. 
+Total number of recurrences, after the rule is evaluated.
 
 =item * interval
 
+A positive number, starting in 1. Default is 1.
+
+Example: 
+
+  freq=yearly;interval=2
+
+events on this recurrence occur each other year.
+
 =item * wkst
+
+Week start day. Default is monday ('mo').
 
 =item * bysetpos => [ list ]
 
+Positive or negative numbers, without zero.
+
+Example: 
+
+  freq=yearly;bysetpos=2 
+
+inside a yearly recurrence, select 2nd occurence within each year.
+
 =item * bysecond => [ list ], byminute => [ list ], byhour => [ list ]
 
-Numbers, start in zero.
+Positive or negative numbers, including zero.
 
 =item * byday => [ list ]
 
@@ -516,25 +548,56 @@ The day of week may have a prefix:
 
 =item * bymonthday => [ list ], byyearday => [ list ]
 
+Positive or negative numbers, without zero.
 Days start in 1.
 
 Day -1 is last day of month or year.
 
 =item * byweekno => [ list ]
 
-Week number. Starts in 1. Default week start day is monday.
+Week number. 
+Positive or negative numbers, without zero.
+First week of year is week 1. 
+
+Default week start day is monday.
 
 Week -1 is the last week of year.
 
 =item * bymonth => [ list ]
 
 Months, numbered 1 until 12.
+Positive or negative numbers, without zero.
 
 Month -1 is december.
 
 =back
 
 =back
+
+=head1 VERSION NOTES
+
+bysetpos is not implemented.
+
+byday=1fr gives wrong results if byhour, byminute, or bysecond 
+have 2 or more options.
+
+wkst is not implemented.
+
+no tests were made defining recurrences without dtstart.
+
+the effect of 'count' on a recurrence without dtstart is not defined.
+the effect of count == 0 is not defined.
+
+no tests were made using datetimes with timezones.
+
+mixing positive and negative arguments in the same list
+might give wrong results is the numbers are big enough
+to cause the datetimes to interleave.
+
+some arguments are not checked for overflow, 
+such as byyearday.
+
+'until' is not parsed. It should be parsed by DateTime::Format::ICal.
 
 =head1 AUTHOR
 
@@ -543,7 +606,7 @@ fglock@pucrs.br
 
 =head1 CREDITS
 
-The API is under development, with help from the people
+The API was developed with help from the people
 in the datetime@perl.org list. 
 
 =head1 COPYRIGHT
@@ -564,11 +627,13 @@ DateTime Web page at http://datetime.perl.org/
 
 DateTime
 
-DateTime::Event::Recurrence
+DateTime::Event::Recurrence - simple rule-based recurrences
 
 DateTime::Format::ICal - can parse rfc2445 recurrences
 
-DateTime::Set 
+DateTime::Set - recurrences defined by callback subroutines
+
+DateTime::Event::Cron - recurrences defined by 'cron' rules
 
 DateTime::SpanSet 
 
