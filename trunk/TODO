@@ -1,10 +1,13 @@
 TODO list for Perl module DateTime-Event-ICal
 
 * optimize byday=>['we','fr'] - a lot!
-  - byday with many options makes tests very slow 
-    see: t/rfc2445.t tests 34, 35
-  - bysetpos might get faster if it used 'next'/'previous'
-    instead of 'intersection' - may need memoization
+  DONE:
+    - byday with many options makes tests very slow 
+      see: t/rfc2445.t tests 34, 35
+    - bysetpos might get faster if it used 'next'/'previous'
+      instead of 'intersection' - may need memoization
+  TODO:
+    - use this algorithm when there are more arguments.
 
 * sub _recur_1fr()
   - make it accept 'FR' (it only accepts '1FR' style)

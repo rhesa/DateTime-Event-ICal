@@ -1,5 +1,6 @@
 Changes for DateTime-Event-ICal
 
+- bysetpos is 2x faster
 - fixed the order of operations: bysetpos x span
 
 0.00_02

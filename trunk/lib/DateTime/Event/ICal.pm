@@ -353,20 +353,45 @@ sub _recur_bysetpos {
             my $start = $base_set->current( $_[0] );
             while(1) {
                 my $end   = $base_set->next( $start->clone );
-                # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
-                my $span = DateTime::Span->from_datetimes( 
-                          start => $start,
-                          before => $end );
-                # print STDERR "    done span\n";
-                my $subset = $args{recurrence}->intersection( $span );
-                my @list = $subset->as_list;
-                # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
-                # select
-                @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
-                # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
-                for ( @list ) {
-                    # print STDERR "    choose: ".$_->datetime."\n" if $_ > $self;
-                    return $_ if $_ > $self;
+                if ( $#{$args{bysetpos}} == 0 ) {
+                    # optimize by using 'next' instead of 'intersection'
+
+                    my $pos = $args{bysetpos}[0];
+                    if ( $pos >= 0 ) {
+                        my $next = $start->clone;
+                        $next->subtract( nanoseconds => 1 );
+                        while ( $pos-- >= 0 ) { 
+                            # print STDERR "    next: $pos ".$next->datetime."\n";
+                            $next = $args{recurrence}->next( $next ) 
+                        }
+                        return $next if $next > $self;
+                    }
+                    else {
+                        my $next = $end->clone;
+                        while ( $pos++ < 0 ) { 
+                            # print STDERR "    previous: $pos ".$next->datetime."\n";
+                            $next = $args{recurrence}->previous( $next ) 
+                        }
+                        return $next if $next > $self;
+                    }
+
+                }
+                else {
+                    # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
+                    my $span = DateTime::Span->from_datetimes( 
+                              start => $start,
+                              before => $end );
+                    # print STDERR "    done span\n";
+                    my $subset = $args{recurrence}->intersection( $span );
+                    my @list = $subset->as_list;
+                    # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+                    # select
+                    @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
+                    # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
+                    for ( @list ) {
+                        # print STDERR "    choose: ".$_->datetime."\n" if $_ > $self;
+                        return $_ if $_ > $self;
+                    }
                 }
                 $start = $end;
             }  # /while
