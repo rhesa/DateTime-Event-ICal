@@ -42,37 +42,107 @@ sub recur {
 
     my %by;
     # bysecond byminute byhour
-    if ( $args{freq} ne 'secondly' ) {
-        $by{seconds} = exists $args{bysecond} ? 
-                       delete $args{bysecond} : $dtstart->second;
-        if ( $args{freq} ne 'minutely' ) {
-            $by{minutes} = exists $args{byminute} ? 
-                           delete $args{byminute} : $dtstart->minute;
-            if ( $args{freq} ne 'hourly' ) {
-                $by{hours} = exists $args{byhour} ? 
-                             delete $args{byhour} : $dtstart->hour;
-            }
-        }
+
+    $by{seconds} = exists $args{bysecond} ?
+                       delete $args{bysecond} : 
+                       ( $args{freq} eq 'secondly' ? 
+                           [ 0 .. 59, -1 ] : 
+                           $dtstart->second );
+
+   $by{minutes} = exists $args{byminute} ?
+                      delete $args{byminute} : 
+                      ( $args{freq} eq 'minutely' ||
+                        $args{freq} eq 'secondly' ? 
+                          [ 0 .. 59 ] :
+                          $dtstart->minute );
+
+   $by{hours} = exists $args{byhour} ?
+                    delete $args{byhour} : 
+                    ( $args{freq} eq 'hourly' || 
+                      $args{freq} eq 'minutely' ||
+                      $args{freq} eq 'secondly' ?
+                        [ 0 .. 23 ] :
+                        $dtstart->hour );
+
+
+    my $has_day = 0;
+
+    my $by_year_day;
+    if ( exists $args{byyearday} ) 
+    {
+        my %by2 = %by;   # reuse hour/min/sec components
+        $by2{days} = $args{byyearday};
+        $by_year_day = DateTime::Event::Recurrence->yearly( %by2 );
+        $has_day = 1;
+        delete $args{byyearday};
     }
 
-    # use DT::E::Recurrence directly, if possible
-    if ( $args{freq} eq 'weekly' ) {
-        $by{days} = exists $args{byday} ?
-                    delete $args{byday} : $dtstart->day_of_week;
+    my $by_month_day;
+
+    if ( $args{freq} eq 'monthly' &&
+         ! exists $args{bymonth} ) 
+    {
+        $args{bymonth} = [ 1 .. 12 ];
     }
-    elsif ( $args{freq} eq 'monthly' ) {
-        $by{days} = exists $args{bymonthday} ?
-                    delete $args{bymonthday} : $dtstart->day;
+
+    if ( exists $args{bymonthday} ||
+         exists $args{bymonth} ) 
+    {
+        my %by2 = %by;   # reuse hour/min/sec components
+        $by2{days} = exists $args{bymonthday} ?
+                         $args{bymonthday} :
+                         $dtstart->day;
+        if ( exists $args{bymonth} ) {
+            $by2{months} = $args{bymonth};
+            $by_month_day = DateTime::Event::Recurrence->yearly( %by2 );
+            delete $args{bymonth};
+        }
+        else {
+            $by_month_day = DateTime::Event::Recurrence->monthly( %by2 );
+        }
+        $has_day = 1;
+        delete $args{bymonthday};
     }
-    elsif ( $args{freq} eq 'yearly' ) {
-        $by{days} = exists $args{byyearday} ?
-                    delete $args{byyearday} : $dtstart->day_of_year;
+    my $by_week_day;
+    # TODO: byweek without byday
+    if ( exists $args{byday} ) 
+    {
+        my %by2 = %by;   # reuse hour/min/sec components
+        # NOTE: indexed "-1fr" argument not supported yet
+        my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4, 
+                         fr => 5, sa => 6, su => 7 );
+        $by2{days} = map { $weekdays{$_} } @{$args{byday}};
+        if ( exists $args{byweek} ) {
+            $by2{weeks} = $args{byweek};
+            $by_week_day = DateTime::Event::Recurrence->yearly( %by2 );
+            delete $args{byweek};
+        }
+        else {
+            $by_week_day = DateTime::Event::Recurrence->weekly( %by2 );
+        }
+        $has_day = 1;
+        delete $args{byday};
     }
 
     # freq
-    no strict 'refs';
-    my $base_set = &{"DateTime::Event::Recurrence::$args{freq}"} ( undef, %by );
+    my $by_hour;
+    unless ( $has_day ) {
+        no strict 'refs';
+        $by_hour = &{"DateTime::Event::Recurrence::$args{freq}"} ( undef, %by );
+    }
     # warn 'BASE-SET '. $base_set->intersection($span)->{set};
+
+    my $base_set = $by_year_day;
+    $base_set = $base_set && $by_month_day ?
+                $base_set->intersection( $by_month_day ) :
+                ( $base_set ? $base_set : $by_month_day );
+    $base_set = $base_set && $by_week_day ?
+                $base_set->intersection( $by_week_day ) :
+                ( $base_set ? $base_set : $by_week_day );
+    $base_set = $base_set && $by_hour ?
+                $base_set->intersection( $by_hour ) :
+                ( $base_set ? $base_set : $by_hour );
+    return DateTime::Set->empty_set unless $base_set;
 
     # interval count
     my $interval;
@@ -81,6 +151,7 @@ sub recur {
         $args{interval} = 1 unless $args{interval};
         $args{count} = INFINITY unless $args{count};
 
+        no strict 'refs';
         my $interval_base_set = &{"DateTime::Event::Recurrence::$args{freq}"};
         my $interval_spanset = DateTime::SpanSet->from_sets(
                  start_set => $interval_base_set,
