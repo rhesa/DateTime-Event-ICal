@@ -13,6 +13,16 @@ use Test::More qw(no_plan);
 use DateTime::Span;
 BEGIN { use_ok('DateTime::Event::ICal') };
 
+sub str {
+    my $iter = $_[0]->iterator;
+    my @result;
+    while ( my $dt = $iter->next ) {
+        push @result, $dt->datetime
+            if ref( $dt ); 
+    };
+    return join( ',', @result );
+}
+
 my ($title, $a, $a2, $b, $period, $RFC);
 
 # DATES
@@ -150,7 +160,7 @@ $title="***  Daily for 10 occurrences  ***";
             freq => 'daily', 
             count => 10 )
             ->intersection( $period_1995_1999 );
-    is("".$a->{set}, 
+    is("". str($a), 
         '1997-09-02T09:00:00,1997-09-03T09:00:00,' .
         '1997-09-04T09:00:00,1997-09-05T09:00:00,' .
         '1997-09-06T09:00:00,1997-09-07T09:00:00,' .
@@ -171,7 +181,7 @@ $title="***  Daily until December 24, 1997  ***";
             freq => 'daily',
             until => $dt19971224T000000 )
             ->intersection( $period_1995_1999 );
-    is("".$a->{set},
+    is("". str($a),
         '1997-09-02T09:00:00,1997-09-03T09:00:00,' .
         '1997-09-04T09:00:00,1997-09-05T09:00:00,' .
         '1997-09-06T09:00:00,1997-09-07T09:00:00,' .
@@ -248,7 +258,7 @@ $title="***  Every other day - forever  ***";
             freq => 'daily',
             interval => 2 )
             ->intersection( $period_1995_1998 );
-    is("".$a->{set},
+    is("". str($a),
 
         '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
         '1997-09-06T09:00:00,1997-09-08T09:00:00,1997-09-10T09:00:00,' .
@@ -292,7 +302,7 @@ $title="***  Every 10 days, 5 occurrences  ***";
             count => 5 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-12T09:00:00,1997-09-22T09:00:00,' .
         '1997-10-02T09:00:00,1997-10-12T09:00:00', 
         $title);
@@ -320,7 +330,7 @@ $title="***  Everyday in January, for 3 years  ***";
             byday =>    [ qw( su mo tu we th fr sa ) ] )
             ->intersection( $period_1995_2001 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1998-01-01T09:00:00,1998-01-02T09:00:00,' .
         '1998-01-03T09:00:00,1998-01-04T09:00:00,1998-01-05T09:00:00,' .
         '1998-01-06T09:00:00,1998-01-07T09:00:00,1998-01-08T09:00:00,' .
@@ -368,7 +378,7 @@ $title="***  Everyday in January, for 3 years  ***";
             )
             ->intersection( $period_1995_2001 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1998-01-01T09:00:00,1998-01-02T09:00:00,' .
         '1998-01-03T09:00:00,1998-01-04T09:00:00,1998-01-05T09:00:00,' .
         '1998-01-06T09:00:00,1998-01-07T09:00:00,1998-01-08T09:00:00,' .
@@ -423,7 +433,7 @@ $title="***  Weekly for 10 occurrence  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set},
+    is("".str($a),
         '1997-09-02T09:00:00,1997-09-09T09:00:00,' .
         '1997-09-16T09:00:00,1997-09-23T09:00:00,1997-09-30T09:00:00,' .
         '1997-10-07T09:00:00,1997-10-14T09:00:00,1997-10-21T09:00:00,' .
@@ -447,7 +457,7 @@ $title="***  Weekly until December 24, 1997  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("". str($a), 
         '1997-09-02T09:00:00,1997-09-09T09:00:00,' .
         '1997-09-16T09:00:00,1997-09-23T09:00:00,1997-09-30T09:00:00,' .
         '1997-10-07T09:00:00,1997-10-14T09:00:00,1997-10-21T09:00:00,' .
@@ -477,7 +487,7 @@ $title="***  Every other week - forever  ***";
             )
             ->intersection( $period_1995_19980201 );
 
-    is("".$a->{set}, 
+    is("". str($a), 
         '1997-09-02T09:00:00,1997-09-16T09:00:00,1997-09-30T09:00:00,' .
         '1997-10-14T09:00:00,' .
         '1997-10-28T09:00:00,' .
@@ -510,7 +520,7 @@ $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set},
+    is("". str($a),
         '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
         '1997-09-09T09:00:00,1997-09-11T09:00:00,1997-09-16T09:00:00,' .
         '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,' .
@@ -528,7 +538,7 @@ $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("". str($a), 
         '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
         '1997-09-09T09:00:00,1997-09-11T09:00:00,1997-09-16T09:00:00,' .
         '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,' .
@@ -559,7 +569,7 @@ $title="***  Every other week on Monday, Wednesday and Friday until December 24 
             ->union( $dt19970902T090000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set},
+    is("". str($a),
     '1997-09-02T09:00:00,1997-09-03T09:00:00,' .
     '1997-09-05T09:00:00,1997-09-15T09:00:00,1997-09-17T09:00:00,' .
     '1997-09-19T09:00:00,1997-09-29T09:00:00,' .
@@ -593,7 +603,7 @@ $title="***  Every other week on Tuesday and Thursday, for 8 occurrences  ***";
             ->union( $dt19970902T090000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
     '1997-09-16T09:00:00,1997-09-18T09:00:00,1997-09-30T09:00:00,' .
     '1997-10-02T09:00:00,1997-10-14T09:00:00,1997-10-16T09:00:00', 
@@ -621,7 +631,7 @@ $title="***  Monthly on the 1st Friday for ten occurrences  ***";
             ->union( $dt19970905T090000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set},
+    is("".str($a),
     '1997-09-05T09:00:00,' .
     '1997-10-03T09:00:00,' .
     '1997-11-07T09:00:00,' .
@@ -652,7 +662,7 @@ $title="***  Monthly on the 1st Friday until December 24, 1997  ***";
             ->union( $dt19970905T090000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-05T09:00:00,' .
     '1997-10-03T09:00:00,' .
     '1997-11-07T09:00:00,' .
@@ -683,7 +693,7 @@ $title="***  Every other month on the 1st and last Sunday of the month for 1  **
             ->intersection( $period_1995_1999 );
 
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-07T09:00:00,1997-09-28T09:00:00,' .
     '1997-11-02T09:00:00,1997-11-30T09:00:00,' .
     '1998-01-04T09:00:00,1998-01-25T09:00:00,' .
@@ -710,7 +720,7 @@ $title="***  Monthly on the second to last Monday of the month for 6 months  ***
             # ->union( $dt19970905T090000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-22T09:00:00,1997-10-20T09:00:00,' .
     '1997-11-17T09:00:00,1997-12-22T09:00:00,' .
     '1998-01-19T09:00:00,1998-02-16T09:00:00',
@@ -736,7 +746,7 @@ $title="***  Monthly on the third to the last day of the month, forever  ***";
             )
             ->intersection( $period_1995_19980301 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-28T09:00:00,' .
     '1997-10-29T09:00:00,1997-11-28T09:00:00,1997-12-29T09:00:00,' .
     '1998-01-29T09:00:00,1998-02-26T09:00:00',
@@ -763,7 +773,7 @@ $title="***  Monthly on the 2nd and 15th of the month for 10 occurrences  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-15T09:00:00,' .
     '1997-10-02T09:00:00,1997-10-15T09:00:00,' .
     '1997-11-02T09:00:00,1997-11-15T09:00:00,' .
@@ -790,7 +800,7 @@ $title="***  Monthly on the first and last day of the month for 10 occurrences  
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-30T09:00:00,1997-10-01T09:00:00,' .
     '1997-10-31T09:00:00,1997-11-01T09:00:00,1997-11-30T09:00:00,' .
     '1997-12-01T09:00:00,1997-12-31T09:00:00,' .
@@ -817,7 +827,7 @@ $title="***  Every 18 months on the 10th thru 15th of the month for 10 occurrenc
             )
             ->intersection( $period_1995_2000 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-10T09:00:00,1997-09-11T09:00:00,' .
         '1997-09-12T09:00:00,1997-09-13T09:00:00,' .
         '1997-09-14T09:00:00,1997-09-15T09:00:00,' .
@@ -843,7 +853,7 @@ $title="***  Every Tuesday, every other month  ***";
             )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-09T09:00:00,' .
         '1997-09-16T09:00:00,1997-09-23T09:00:00,1997-09-30T09:00:00,' .
         '1997-11-04T09:00:00,1997-11-11T09:00:00,' .
@@ -882,7 +892,7 @@ $title="***  Yearly in June and July for 10 occurrences  ***";
             )
             ->intersection( $period_1995_2005 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-06-10T09:00:00,1997-07-10T09:00:00,' .
         '1998-06-10T09:00:00,1998-07-10T09:00:00,' .
         '1999-06-10T09:00:00,1999-07-10T09:00:00,' .
@@ -912,7 +922,7 @@ $title="***  Every other year on January, February, and March for 10 occurrences
             )
             ->intersection( $period_1995_2004 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-03-10T09:00:00,' .
         '1999-01-10T09:00:00,1999-02-10T09:00:00,1999-03-10T09:00:00,' .
         '2001-01-10T09:00:00,2001-02-10T09:00:00,2001-03-10T09:00:00,' .
@@ -941,7 +951,7 @@ $title="***  Every 3rd year on the 1st, 100th and 200th day for 10 occurrences  
             byyearday => [ 1, 100, 200 ] )
             ->intersection( $period_1995_2007 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-01-01T09:00:00,' .
     '1997-04-10T09:00:00,1997-07-19T09:00:00,' .
     '2000-01-01T09:00:00,' .
@@ -969,7 +979,7 @@ $title="***  Every 20th Monday of the year, forever  ***";
             byday =>    [ '20mo' ] )
             ->intersection( $period_1995_2000 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-05-19T09:00:00,1998-05-18T09:00:00,1999-05-17T09:00:00', $title);
 
 $title="***  Monday of week number 20 (where the default start of the week i  ***";
@@ -990,7 +1000,7 @@ $title="***  Monday of week number 20 (where the default start of the week i  **
             byday =>    [ 'mo' ] )
             ->intersection( $period_1995_2000 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-05-12T09:00:00,1998-05-11T09:00:00,1999-05-17T09:00:00', $title);
 
 $title="***  Every Thursday in March, forever  ***";
@@ -1010,7 +1020,7 @@ $title="***  Every Thursday in March, forever  ***";
             byday =>    [ 'th' ] )
             ->intersection( $period_1995_2000 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-03-13T09:00:00,1997-03-20T09:00:00,1997-03-27T09:00:00,' .
     '1998-03-05T09:00:00,1998-03-12T09:00:00,' .
     '1998-03-19T09:00:00,1998-03-26T09:00:00,' .
@@ -1038,7 +1048,7 @@ $title="***  Every Thursday, but only during June, July, and August, forever  **
             byday =>    [ 'th' ] )
             ->intersection( $period_1995_2000 );
 
-    is("".$a->{set},
+    is("".str($a),
     '1997-06-05T09:00:00,1997-06-12T09:00:00,' .
     '1997-06-19T09:00:00,1997-06-26T09:00:00,' .
     '1997-07-03T09:00:00,1997-07-10T09:00:00,' .
@@ -1081,7 +1091,7 @@ $title="***  Every Friday the 13th, forever  ***";
             ->intersection( $period_1995_2001 );
     # EXDATE doesn't make sense here, because the date is not in the set
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1998-02-13T09:00:00,1998-03-13T09:00:00,1998-11-13T09:00:00,' .
     '1999-08-13T09:00:00,2000-10-13T09:00:00', $title);
 
@@ -1105,7 +1115,7 @@ $title="***  The first Saturday that follows the first Sunday of the month  ***"
             byday =>      [ 'sa' ] )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
     '1997-09-13T09:00:00,1997-10-11T09:00:00,' .
     '1997-11-08T09:00:00,1997-12-13T09:00:00,' .
     '1998-01-10T09:00:00,1998-02-07T09:00:00,1998-03-07T09:00:00,' .
@@ -1138,7 +1148,7 @@ $title="***  Every four years, the first Tuesday after a Monday in November  ***
             bymonth =>    [ 11 ], )
             ->intersection( $period_1995_2005 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1996-11-05T09:00:00,2000-11-07T09:00:00,2004-11-02T09:00:00',
     $title);
 
@@ -1161,7 +1171,7 @@ $title="***  The 3rd instance into the month of one of Tuesday, Wednesday or Thu
             bysetpos =>   3 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-04T09:00:00,1997-10-07T09:00:00,1997-11-06T09:00:00', $title);
 
 
@@ -1184,7 +1194,7 @@ $title="***  The 2nd to last weekday of the month:  ***";
             bysetpos =>   -2 )
             ->intersection( $period_1995_19980401 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-29T09:00:00,1997-10-30T09:00:00,' .
         '1997-11-27T09:00:00,1997-12-30T09:00:00,1998-01-29T09:00:00,' .
         '1998-02-26T09:00:00,1998-03-30T09:00:00', $title);
@@ -1204,7 +1214,7 @@ $title="***  Every 3 hours from 9:00 AM to 5:00 PM on a specific day  ***";
             until =>      $dt19970902T170000 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-02T12:00:00,1997-09-02T15:00:00', $title);
 
 $title="***  Every 15 minutes for 6 occurrences  ***";
@@ -1222,7 +1232,7 @@ $title="***  Every 15 minutes for 6 occurrences  ***";
             count =>      6 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-02T09:15:00,' .
         '1997-09-02T09:30:00,1997-09-02T09:45:00,' .
         '1997-09-02T10:00:00,1997-09-02T10:15:00',
@@ -1243,7 +1253,7 @@ $title="***  Every hour and a half for 4 occurrences  ***";
             count =>      4 )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-02T10:30:00,' .
         '1997-09-02T12:00:00,1997-09-02T13:30:00', $title);
 
@@ -1273,7 +1283,7 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
             byminute =>   [ 0,20,40 ] )
             ->intersection( $period_1995_19970904T090000 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
         '1997-09-02T09:40:00,1997-09-02T10:00:00,1997-09-02T10:20:00,' .
         '1997-09-02T10:40:00,1997-09-02T11:00:00,' .
@@ -1307,7 +1317,7 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
             byhour =>     [ 9,10,11,12,13,14,15,16 ], )
             ->intersection( $period_1995_19970904T090000 );
 
-    is("".$a->{set},
+    is("".str($a),
         '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
         '1997-09-02T09:40:00,1997-09-02T10:00:00,1997-09-02T10:20:00,' .
         '1997-09-02T10:40:00,1997-09-02T11:00:00,' .
@@ -1348,7 +1358,7 @@ $title="***  An example where the days generated makes a difference because of W
             wkst =>       'mo' )
             ->intersection( $period_1995_1999 );
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-08-05T09:00:00,1997-08-10T09:00:00,' .
         '1997-08-19T09:00:00,1997-08-24T09:00:00', $title);
 
@@ -1368,7 +1378,7 @@ $title="***  changing only WKST from MO to SU, yields different results...  ***"
             ->intersection( $period_1995_1999 );
 
 
-    is("".$a->{set}, 
+    is("".str($a), 
         '1997-08-05T09:00:00,1997-08-17T09:00:00,' .
         '1997-08-19T09:00:00,1997-08-31T09:00:00', $title);
 
