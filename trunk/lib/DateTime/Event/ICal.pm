@@ -189,7 +189,12 @@ sub recur {
         delete $args{count};
     }
 
-    $base_set = $base_set->intersection( $interval ) if $interval;
+    if ( $interval ) {
+        $base_set = $base_set->intersection( $interval );
+    }
+    elsif ( $span ) {
+        $base_set = $base_set->intersection( $span );
+    }
 
     # TODO:
     # wkst

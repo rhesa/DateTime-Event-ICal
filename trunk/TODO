@@ -7,7 +7,7 @@ TODO list for Perl module DateTime-Event-ICal
 * the implementation of 'select' in Set::Infinite is incomplete
   and doesn't have the 'last' attribute. -- should be implemented!
 
-* import Date::Set RFC2445 recurrence tests
+* finish importing Date::Set RFC2445 recurrence tests
 
 * POD for recur() attributes
 
