@@ -1,5 +1,8 @@
 Changes for DateTime-Event-ICal
 
+0.06    2003-09-04
+- recurrence stringification does not depend on hash 'order'
+
 0.05    2003-09-02
 - rfc2445.t is compatible with Perl 5.00503
 
