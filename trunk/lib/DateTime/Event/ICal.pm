@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -588,7 +588,10 @@ sub recur {
     my @args = %args;
     die "these arguments are not implemented: "._param_str(%args) if @args;
 
-    $base_set->{as_ical} = [ uc('recur:'.$recur_str) ];
+    # note: the {as_ical} key is a DT::Event::ICal extension
+    #   to Set::Infinite
+    $base_set->{set}{as_ical} = [ uc('recur:'.$recur_str) ];
+
     return $base_set;
 }
 

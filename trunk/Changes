@@ -1,5 +1,8 @@
 Changes for DateTime-Event-ICal
 
+0.03    2003-07-03
+- change hints for DT::Format::ICal format_recurrence
+
 0.02    2003-07-02
 - provides hints for DT::Format::ICal format_recurrence
 
