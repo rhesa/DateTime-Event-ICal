@@ -93,6 +93,9 @@ my $dt20000131T090000 = DateTime->new(
 
 # PERIODS
 
+my $period_1995_19970904T090000 = DateTime::Span->new(
+            start => $dt19950101, end => $dt19970904T090000 );
+
 my $period_1995_1999 = DateTime::Span->new(
             start => $dt19950101, end => $dt19990101 );
 
@@ -1069,6 +1072,7 @@ $title="***  Every Friday the 13th, forever  ***";
 #         (2000 9:00 AM EDT)October 13
 #     ...
 #
+
     $a = DateTime::Event::ICal->recur(
             dtstart =>  $dt19970902T090000 ,
             freq =>     'monthly',
@@ -1077,13 +1081,10 @@ $title="***  Every Friday the 13th, forever  ***";
             ->intersection( $period_1995_2001 );
     # EXDATE doesn't make sense here, because the date is not in the set
 
-TODO: {
-    local $TODO = "one instance is missing";
-
     is("".$a->{set}, 
     '1998-02-13T09:00:00,1998-03-13T09:00:00,1998-11-13T09:00:00,' .
     '1999-08-13T09:00:00,2000-10-13T09:00:00', $title);
-}
+
 
 $title="***  The first Saturday that follows the first Sunday of the month  ***";
 #    forever:
@@ -1113,6 +1114,9 @@ $title="***  The first Saturday that follows the first Sunday of the month  ***"
     '1998-10-10T09:00:00,1998-11-07T09:00:00,1998-12-12T09:00:00',
     $title);
 
+
+# test 33
+
 $title="***  Every four years, the first Tuesday after a Monday in November  ***";
 #   forever (U.S. Presidential Election day):
 #
@@ -1138,6 +1142,7 @@ $title="***  Every four years, the first Tuesday after a Monday in November  ***
         '1996-11-05T09:00:00,2000-11-07T09:00:00,2004-11-02T09:00:00',
     $title);
 
+# test 34
 
 $title="***  The 3rd instance into the month of one of Tuesday, Wednesday or Thursday, for the next 3 months:  ***";
 #
@@ -1147,9 +1152,6 @@ $title="***  The 3rd instance into the month of one of Tuesday, Wednesday or Thu
 #     ==> (1997 9:00 AM EDT)September 4;October 7
 #         (1997 9:00 AM EST)November 6
 #
-
-SKIP: {
-    skip "Infinite loop", 1 if 1;
 
     $a = DateTime::Event::ICal->recur(
             dtstart =>    $dt19970904T090000 ,
@@ -1161,7 +1163,7 @@ SKIP: {
 
     is("".$a->{set}, 
         '1997-09-04T09:00:00,1997-10-07T09:00:00,1997-11-06T09:00:00', $title);
-}
+
 
 $title="***  The 2nd to last weekday of the month:  ***";
 #
@@ -1173,8 +1175,7 @@ $title="***  The 2nd to last weekday of the month:  ***";
 #         (1998 9:00 AM EST)January 29;February 26;March 30
 #     ...
 #
-SKIP: {
-    skip "Infinite loop", 1 if 1;
+
 
     $a = DateTime::Event::ICal->recur(
             dtstart =>    $dt19970904T090000 ,
@@ -1187,7 +1188,7 @@ SKIP: {
         '1997-09-29T09:00:00,1997-10-30T09:00:00,' .
         '1997-11-27T09:00:00,1997-12-30T09:00:00,1998-01-29T09:00:00,' .
         '1998-02-26T09:00:00,1998-03-30T09:00:00', $title);
-}
+
 
 $title="***  Every 3 hours from 9:00 AM to 5:00 PM on a specific day  ***";
 #
@@ -1265,15 +1266,15 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
 #     ...
 #
 
-SKIP: {
-    skip "Takes too long", 1 if 1;
+# SKIP: {
+#    skip "Takes too long", 1 if 1;
 
     $a = DateTime::Event::ICal->recur(
             dtstart =>    $dt19970902T090000 ,
             freq =>       'daily',
             byhour =>     [ 9,10,11,12,13,14,15,16 ],
             byminute =>   [ 0,20,40 ] )
-            ->intersection( $period_1995_1999 );
+            ->intersection( $period_1995_19970904T090000 );
 
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
@@ -1296,9 +1297,9 @@ SKIP: {
         '1997-09-03T14:00:00,1997-09-03T14:20:00,' .
         '1997-09-03T14:40:00,1997-09-03T15:00:00,1997-09-03T15:20:00,' .
         '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
-        '1997-09-03T16:20:00,1997-09-03T16:40:00',
+        '1997-09-03T16:20:00,1997-09-03T16:40:00,1997-09-04T09:00:00',
     $title);
-}
+# }
 
 #     recur_by_rule:FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16
 

@@ -127,9 +127,11 @@ sub _weekly_recurrence {
             $by{minutes} = $dtstart->minute unless exists $by{minutes};
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
-            # TODO: -1fr should work too?
+            # -1fr works too
             $by{days} = exists $args{byday} ?
-                        [ map { $weekdays{$_} } @{$args{byday}} ] :
+                        [ map { $_ =~ s/[\-\+\d]+//; $weekdays{$_} } 
+                              @{$args{byday}} 
+                        ] :
                         $dtstart->day_of_week ;
     # warn "weekly:"._param_str(%by);
 
@@ -281,7 +283,7 @@ sub _recur_1fr {
         my %_args = %args;
         $_args{weeks} = $days{$_};
         $_args{week_start_day} = '1'.$_;
-        # warn "creating base set with $_ "._param_str( %_args );
+        # warn "creating set with $_ "._param_str( %_args );
 
         if ( $_args{freq} eq 'monthly' ) {
             $base_duration = 'months';
@@ -322,6 +324,11 @@ sub _recur_bysetpos {
     #    $DateTime::Event::Recurrence::next_unit{ $names };
     #my $previous_unit_sub =
     #    $DateTime::Event::Recurrence::previous_unit{ $names };
+
+    $args{bysetpos} = [ $args{bysetpos} ]
+        unless ref( @{$args{bysetpos}} );
+    # die "invalid bysetpos parameter [@{$args{bysetpos}}]" 
+    #     unless @{$args{bysetpos}};
     # print STDERR "bysetpos:  [@{$args{bysetpos}}]\n";
     for ( @{$args{bysetpos}} ) { $_-- if $_ > 0 }
     return DateTime::Set->from_recurrence (
@@ -499,8 +506,6 @@ sub recur {
     $base_set = $base_set && $by_week_day ?
                 $base_set->intersection( $by_week_day ) :
                 ( $base_set ? $base_set : $by_week_day );
-    $base_set = $base_set->intersection( $span )
-                if $span;
 
     # TODO:
     # wkst
@@ -514,6 +519,9 @@ sub recur {
             recurrence => $base_set );
         delete $args{bysetpos};
     }
+
+    $base_set = $base_set->intersection( $span )
+                if $span;
 
     # check for nonprocessed arguments
     delete $args{freq};
