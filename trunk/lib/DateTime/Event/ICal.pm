@@ -44,6 +44,8 @@ sub _param_str {
     return join(';', @str);
 }
 
+# recurrence constructors
+
 sub _secondly_recurrence {
     my ($dtstart, $argsref) = @_;
     my %by;
@@ -194,6 +196,53 @@ sub _yearly_recurrence {
         for qw( interval bysecond byminute byhour );
     return DateTime::Event::Recurrence->yearly( %by );
 }
+
+# recurrence constructor for '1FR' specification
+
+sub _recur_1fr {
+    # ( freq , interval, dtstart
+    #    week_count(s) , week_day(s) )
+    my %args = @_;
+    my $base_set;
+
+    my $days;
+    die "week count can't be zero" if $args{week_count} == 0;
+    if ( $args{week_count} > 0 ) {
+        $days = 1 + 7 * ( $args{week_count} - 1 );
+    }
+    else {
+        $days = -1 + 7 * ( $args{week_count} + 1 );
+    }
+
+    # TODO: use DTSTART
+
+    # TODO: use a singleton for $base_set ?
+    if ( $args{freq} eq 'monthly' ) {
+        $base_set = DateTime::Event::Recurrence->monthly(
+            interval => $args{interval},
+            days => $days );
+    }
+    elsif ( $args{freq} eq 'yearly' ) {
+        $base_set = DateTime::Event::Recurrence->yearly(
+            interval => $args{interval},
+            days => $days );
+    }
+    else {
+        die "invalid freq ($args{freq})";
+    }
+
+    # return a callback-recurrence
+
+    # next-sub
+    sub {
+        # ( current_value, 'month'/'year', n, weekday 0-6 )
+        my $self = $_[0]->clone;
+        my $start = $_[0]->truncate( to => $_[1] );
+    }
+
+}
+
+# main recurrence constructor
 
 sub recur {
     my $class = shift;

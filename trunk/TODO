@@ -1,8 +1,7 @@
 TODO list for Perl module DateTime-Event-ICal
 
-* parser ? -- DateTime::Format::ICal, maybe
-
 * "byday -2 friday"
+  - finish _recur_1fr()
 
 * the implementation of 'select' in Set::Infinite is incomplete
   and doesn't have the 'last' attribute. -- should be implemented!
