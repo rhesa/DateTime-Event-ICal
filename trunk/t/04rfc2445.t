@@ -19,8 +19,15 @@ my ($title, $a, $a2, $b, $period, $RFC);
 
 my $dt19950101 = DateTime->new( 
     year => 1995 );
+
 my $dt19990101 = DateTime->new( 
     year => 1999 );
+
+my $dt19970101T090000 = DateTime->new(
+    year => 1997, month => 1, day => 1, hour => 9,
+    # time_zone => 'US-Eastern',
+ );
+
 my $dt19970310T090000 = DateTime->new(
     year => 1997, month => 3, day => 10, hour => 9,
     # time_zone => 'US-Eastern',
@@ -30,30 +37,37 @@ my $dt19970610T090000 = DateTime->new(
     year => 1997, month => 6, day => 10, hour => 9,
     # time_zone => 'US-Eastern',
  );
+
 my $dt19970902T090000 = DateTime->new( 
     year => 1997, month => 9, day => 2, hour => 9,
     # time_zone => 'US-Eastern',
  );
+
 my $dt19970905T090000 = DateTime->new( 
     year => 1997, month => 9, day => 5, hour => 9,
     # time_zone => 'US-Eastern',
  );
+
 my $dt19971007T000000= DateTime->new(
     year => 1997, month => 10, day => 7,
     # time_zone => 'US-Eastern',
  );
+
 my $dt19971224T000000 = DateTime->new(
     year => 1997, month => 12, day => 24, 
     # time_zone => 'US-Eastern',
  );
+
 my $dt19980101T090000 = DateTime->new(
     year => 1998, month => 1, day => 1, hour => 9,
     # time_zone => 'US-Eastern',
  );
+
 my $dt19980201T000000 = DateTime->new(
     year => 1998, month => 2, day => 1, 
     # time_zone => 'US-Eastern',
  );
+
 my $dt20000131T090000 = DateTime->new(
     year => 2000, month => 1, day => 31, hour => 9,
     # time_zone => 'US-Eastern',
@@ -92,6 +106,10 @@ my $period_1995_2004 = DateTime::Span->new(
 my $period_1995_2005 = DateTime::Span->new(
             start => $dt19950101,
             end => $dt19990101->clone->add( years => 6 ) );
+
+my $period_1995_2007 = DateTime::Span->new(
+            start => $dt19950101,
+            end => $dt19990101->clone->add( years => 8 ) );
 
 
 # TESTS
@@ -876,7 +894,6 @@ $title="***  Every other year on January, February, and March for 10 occurrences
         '2001-01-10T09:00:00,2001-02-10T09:00:00,2001-03-10T09:00:00,' .
         '2003-01-10T09:00:00,2003-02-10T09:00:00,2003-03-10T09:00:00', $title);
 
-__END__
 
 $title="***  Every 3rd year on the 1st, 100th and 200th day for 10 occurrences  ***";
 #
@@ -891,13 +908,17 @@ $title="***  Every 3rd year on the 1st, 100th and 200th day for 10 occurrences  
 #         (2003 9:00 AM EDT)April 10;July 19
 #         (2006 9:00 AM EST)January 1
 #
-    # make a period from 1995 until 2007
-    $period = Date::Set->period( time => ['19950101Z', '20070101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-01-01T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=YEARLY;INTERVAL=3;COUNT=10;BYYEARDAY=1,100,200' )
-        ->occurrences( period => $period );
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970101T090000 ,
+            freq =>     'yearly',
+            interval => 3,
+            count   =>  10,
+            byyearday => [ 1, 100, 200 ] )
+            ->intersection( $period_1995_2007 );
+
     is("".$a->{set}, 
-        '1997-01-01T09:00:00,' .
+    '1997-01-01T09:00:00,' .
     '1997-04-10T09:00:00,1997-07-19T09:00:00,' .
     '2000-01-01T09:00:00,' .
     '2000-04-09T09:00:00,2000-07-18T09:00:00,' .
@@ -917,11 +938,13 @@ $title="***  Every 20th Monday of the year, forever  ***";
 #         (1999 9:00 AM EDT)May 17
 #     ...
 #
-    # make a period from 1995 until 2000
-    $period = Date::Set->period( time => ['19950101Z', '20000101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-05-19T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=YEARLY;BYDAY=20MO' )
-        ->occurrences( period => $period );
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970101T090000 ,
+            freq =>     'yearly',
+            byday =>    [ '20mo' ] )
+            ->intersection( $period_1995_2000 );
+
     is("".$a->{set}, 
         '1997-05-19T09:00:00,1998-05-18T09:00:00,1999-05-17T09:00:00', $title);
 
@@ -936,14 +959,17 @@ $title="***  Monday of week number 20 (where the default start of the week i  **
 #         (1999 9:00 AM EDT)May 17
 #     ...
 #
-    # make a period from 1995 until 2000
-    $period = Date::Set->period( time => ['19950101Z', '20000101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-05-12T09:00:00' )
-        ->recur_by_rule( RRULE=>'FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO' )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970101T090000 ,
+            freq =>     'yearly',
+            byweekno => [ 20 ],
+            byday =>    [ 'mo' ] )
+            ->intersection( $period_1995_2000 );
+
     is("".$a->{set}, 
         '1997-05-12T09:00:00,1998-05-11T09:00:00,1999-05-17T09:00:00', $title);
 
+__END__
 $title="***  Every Thursday in March, forever  ***";
 #
 #     DTSTART;TZID=US-Eastern:19970313T090000

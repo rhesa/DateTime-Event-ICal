@@ -144,12 +144,12 @@ sub _monthly_recurrence {
     my %args = %$argsref;
             $by{interval} = $args{interval} if exists $args{interval};
             $by{start} =    $dtstart;
-            $by{seconds} = $args{bysecond} if exists $args{bysecond};
-            $by{seconds} = $dtstart->second unless exists $by{seconds};
-            $by{minutes} = $args{byminute} if exists $args{byminute};
-            $by{minutes} = $dtstart->minute unless exists $by{minutes};
-            $by{hours} =   $args{byhour} if exists $args{byhour};
-            $by{hours} =   $dtstart->hour unless exists $by{hours};
+            $by{seconds} =  $args{bysecond} if exists $args{bysecond};
+            $by{seconds} =  $dtstart->second unless exists $by{seconds};
+            $by{minutes} =  $args{byminute} if exists $args{byminute};
+            $by{minutes} =  $dtstart->minute unless exists $by{minutes};
+            $by{hours} =    $args{byhour} if exists $args{byhour};
+            $by{hours} =    $dtstart->hour unless exists $by{hours};
 
             if ( exists $args{bymonthday} )
             {
@@ -221,9 +221,9 @@ sub _yearly_recurrence {
                 $by{weeks} =  $args{byweekno};
                 delete $$argsref{byweekno};
 
-                $by{days} =    $args{byweekday} if exists $args{byweekday};
+                $by{days} =    $args{byday} if exists $args{byday};
                 $by{days} =    $dtstart->day_of_week unless exists $by{days};
-                delete $$argsref{byweekday};
+                delete $$argsref{byday};
             }
             elsif ( exists $args{byyearday} )
             {
@@ -231,8 +231,12 @@ sub _yearly_recurrence {
                 delete $$argsref{byyearday};
             }
             elsif ( exists $args{byday} )
-            {   # "1FR"
+            {  
+                # process byday = "1FR" and "FR"
+
                 $by{byday} =    $args{byday};
+                # don't use 'FR'-style here
+
                 delete $$argsref{$_} 
                     for qw( interval bysecond byminute byhour byday );
                 return _recur_1fr( %by, freq => 'yearly' );
@@ -253,6 +257,7 @@ sub _yearly_recurrence {
 
 sub _recur_1fr {
     # ( freq , interval, dtstart, byday[ week_count . week_day ] )
+    # TODO: accept simple 'FR' specification
     my %args = @_;
     my $base_set;
     my %days;

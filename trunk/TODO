@@ -1,5 +1,8 @@
 TODO list for Perl module DateTime-Event-ICal
 
+* sub _recur_1fr()
+  - make it accept 'FR' (it only accepts '1FR' style)
+
 * "byday -2 friday"
   - use yearly;-1su to define 'wkst' !
   - test overflow
