@@ -1,5 +1,6 @@
 Changes for DateTime-Event-ICal
 
+0.0302  2003-08-25
 - bugfix for 'yearly-byday'.  Bug reported by John Bishop.
 - more tests for 'yearly-byday'
 
