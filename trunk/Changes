@@ -1,5 +1,9 @@
 Changes for DateTime-Event-ICal
 
+0.0601  2004-03-09
+- the recurrence functions accept infinite DateTimes, as required
+  by DT::Set 0.1402
+
 0.06    2003-09-04
 - recurrence stringification does not depend on hash 'order'
 
