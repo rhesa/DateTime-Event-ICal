@@ -1,7 +1,9 @@
 TODO list for Perl module DateTime-Event-ICal
 
 * "byday -2 friday"
-  - finish _recur_1fr()
+  - define "previous" sub ?
+  - use yearly;-1su to define 'wkst' !
+  - test overflow
 
 * the implementation of 'select' in Set::Infinite is incomplete
   and doesn't have the 'last' attribute. -- should be implemented!

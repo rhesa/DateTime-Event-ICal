@@ -19,7 +19,7 @@ use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4,
                  fr => 5, sa => 6, su => 7 );
 
-# debugging method
+# internal debugging method - formats the argument list
 sub _param_str {
     my %param = @_;
     my @str;
@@ -139,8 +139,22 @@ sub _monthly_recurrence {
             $by{minutes} = $dtstart->minute unless exists $by{minutes};
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
-            $by{days} =    $args{bymonthday} if exists $args{bymonthday};
-            $by{days} =    $dtstart->day unless exists $by{days};
+
+            if ( exists $args{bymonthday} )
+            {
+                $by{days} =    $args{bymonthday};
+            }
+            elsif ( exists $args{byday} )
+            {   # "1FR"
+                $by{byday} =    $args{byday};
+                delete $$argsref{$_} 
+                    for qw( interval bysecond byminute byhour byday );
+                return _recur_1fr( %by, freq => 'monthly' );
+            }
+            else
+            {
+                $by{days} =    $dtstart->day unless exists $by{days};
+            }
     delete $$argsref{$_}
         for qw( interval bysecond byminute byhour bymonthday );
     return DateTime::Event::Recurrence->monthly( %by );
@@ -185,6 +199,13 @@ sub _yearly_recurrence {
                 $by{days} =    $args{byyearday};
                 delete $$argsref{byyearday};
             }
+            elsif ( exists $args{byday} )
+            {   # "1FR"
+                $by{byday} =    $args{byday};
+                delete $$argsref{$_} 
+                    for qw( interval bysecond byminute byhour byday );
+                return _recur_1fr( %by, freq => 'yearly' );
+            }
             else {
                 $by{months} =  $dtstart->month;
 
@@ -200,32 +221,33 @@ sub _yearly_recurrence {
 # recurrence constructor for '1FR' specification
 
 sub _recur_1fr {
-    # ( freq , interval, dtstart
-    #    week_count(s) , week_day(s) )
+    # ( freq , interval, dtstart, byday[ week_count . week_day ] )
     my %args = @_;
-    my $base_set;
+    my $positive_base_set;
+    my @positive_days;
+    my $base_duration;
 
-    my $days;
-    die "week count can't be zero" if $args{week_count} == 0;
-    if ( $args{week_count} > 0 ) {
-        $days = 1 + 7 * ( $args{week_count} - 1 );
+    # parse byday
+    for ( @{$args{byday}} ) 
+    {
+        my ( $count, $day_name ) = $_ =~ /(.*)(\w\w)/;
+        die "week count ($count) can't be zero" unless $count;
+        my $week_day = $weekdays{ $day_name };
+        die "invalid week day ($day_name)" unless $week_day;
+        push @positive_days, [ $count, $week_day ];
+
     }
-    else {
-        $days = -1 + 7 * ( $args{week_count} + 1 );
-    }
+    delete $args{byday};
 
-    # TODO: use DTSTART
-
-    # TODO: use a singleton for $base_set ?
     if ( $args{freq} eq 'monthly' ) {
-        $base_set = DateTime::Event::Recurrence->monthly(
-            interval => $args{interval},
-            days => $days );
+        $base_duration = 'months';
+        delete $args{freq};
+        $positive_base_set = DateTime::Event::Recurrence->monthly( %args )
     }
     elsif ( $args{freq} eq 'yearly' ) {
-        $base_set = DateTime::Event::Recurrence->yearly(
-            interval => $args{interval},
-            days => $days );
+        $base_duration = 'years';
+        delete $args{freq};
+        $positive_base_set = DateTime::Event::Recurrence->yearly( %args )
     }
     else {
         die "invalid freq ($args{freq})";
@@ -233,13 +255,46 @@ sub _recur_1fr {
 
     # return a callback-recurrence
 
-    # next-sub
-    sub {
-        # ( current_value, 'month'/'year', n, weekday 0-6 )
-        my $self = $_[0]->clone;
-        my $start = $_[0]->truncate( to => $_[1] );
-    }
+    return DateTime::Set->from_recurrence (
+        next =>
+        sub {
+            my $self = $_[0]->clone;
+            my $base = $positive_base_set->previous( $positive_base_set->next( $_[0] ) );
+            my $start;
 
+            while(1) {
+
+                my @result;
+                for ( @positive_days ) 
+                {
+                    my ( $count, $week_day ) = @$_;
+
+                    # warn "date ".$self->datetime." base ".$base->datetime." weeks $count weekday $week_day";
+                    $start = $base->clone;
+                    $start->add( $base_duration => 1, days => 7 ) if $count < 0;
+                    $start->add( weeks => $count - 1);
+                    # print STDERR "    start ".$start->datetime." weekday ".$start->day_of_week."\n";
+                    my $dow = $start->day_of_week;
+                    my $delta_days = $dow <= $week_day ? 
+                                     $week_day - $dow :
+                                     7 + $week_day - $dow;
+                    $start->add( days => $delta_days );
+                    # print STDERR "    start ".$start->datetime." weekday ".$start->day_of_week."\n";
+                    push @result, $start if $start > $self;
+                }
+                if ( @result ) {
+                    # print "    $base_duration results: ". join(",", map { $_->datetime } @result ), "\n";
+                    my $r = $result[0];
+                    for ( @result[ 1 .. $#result ] ) {
+                        $r = $_ if $r > $_;
+                    }
+                    # print "    result: ". $r->datetime. "\n";
+                    return $r;
+                }
+                $base->add( $base_duration => 1 );
+            }
+        }
+    );
 }
 
 # main recurrence constructor
@@ -442,17 +497,40 @@ which don't include C<dtstart>.
 
 =item * wkst
 
-=item * bysetpos
+=item * bysetpos => [ list ]
 
-=item * bysecond byminute byhour
+=item * bysecond => [ list ], byminute => [ list ], byhour => [ list ]
 
-=item * byday 
+Numbers, start in zero.
 
-=item * bymonthday byyearday
+=item * byday => [ list ]
 
-=item * byweekno
+Day of week: one or more of:
 
-=item * bymonth
+ 'mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'
+
+The day of week may have a prefix:
+
+ '1tu',  # the first tuesday of month or year
+ '-2we'  # the second to last wednesday of month or year
+
+=item * bymonthday => [ list ], byyearday => [ list ]
+
+Days start in 1.
+
+Day -1 is last day of month or year.
+
+=item * byweekno => [ list ]
+
+Week number. Starts in 1. Default week start day is monday.
+
+Week -1 is the last week of year.
+
+=item * bymonth => [ list ]
+
+Months, numbered 1 until 12.
+
+Month -1 is december.
 
 =back
 
@@ -487,6 +565,8 @@ DateTime Web page at http://datetime.perl.org/
 DateTime
 
 DateTime::Event::Recurrence
+
+DateTime::Format::ICal - can parse rfc2445 recurrences
 
 DateTime::Set 
 

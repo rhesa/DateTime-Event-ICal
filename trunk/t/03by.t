@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use DateTime;
 use DateTime::Event::ICal;
@@ -72,6 +72,20 @@ use DateTime::Event::ICal;
     is( $r,
         '2004-01-06T12:10:45 2004-03-16T12:10:45',
         "yearly, dtstart, byweekno" );
+
+    # YEARLY BYDAY=1FR
+    $set = DateTime::Event::ICal->recur( 
+       freq =>       'yearly',
+       dtstart =>    $dt1,
+       byday =>    [ '1fr', '2fr', '-1tu' ],
+    );
+
+    @dt = $set->as_list( start => $dt1,
+                         end => $dt1->clone->add( years => 1 ) );
+    $r = join(' ', map { $_->datetime } @dt);
+    is( $r,
+        '2003-12-30T12:10:45 2004-01-02T12:10:45 2004-01-09T12:10:45',
+        "yearly, dtstart, byday=1fr,2fr,-1tu" );
 
 }
 
