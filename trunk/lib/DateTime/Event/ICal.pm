@@ -388,7 +388,10 @@ sub _recur_bysetpos {
     return DateTime::Set->from_recurrence (
         next =>
         sub {
-            return undef unless defined $_[0];
+
+            return $_[0] if $_[0]->is_infinite;
+
+            ## return undef unless defined $_[0];
             my $self = $_[0]->clone;
             # warn "bysetpos: next of ".$_[0]->datetime;
             # print STDERR "    list [@{$args{bysetpos}}] \n";
@@ -441,6 +444,9 @@ sub _recur_bysetpos {
         },
         previous =>
         sub {
+
+            return $_[0] if $_[0]->is_infinite;
+
             my $self = $_[0]->clone;
             # warn "bysetpos: previous of ".$_[0]->datetime;
             # print STDERR "    previous: ".$base_set->current( $_[0] )->datetime."\n";
