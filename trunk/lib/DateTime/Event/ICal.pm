@@ -7,11 +7,11 @@ use DateTime;
 use DateTime::Set;
 use DateTime::Span;
 use DateTime::SpanSet;
-use DateTime::Event::Recurrence 0.06;
+use DateTime::Event::Recurrence 0.11;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = 0.07;
+$VERSION = 0.08;
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
