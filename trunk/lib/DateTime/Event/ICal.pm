@@ -16,9 +16,40 @@ $VERSION = '0.00_02';
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 
+# debugging method
+sub _param_str {
+    my %param = @_;
+    my @str;
+    for ( qw( freq interval count ), 
+          keys %param ) 
+    {
+        next unless exists $param{$_};
+        if ( ref( $param{$_} ) eq 'ARRAY' ) {
+            push @str, "$_=". join( ',', @{$param{$_}} )
+        }
+        elsif ( UNIVERSAL::can( $param{$_}, 'datetime' ) ) {
+            push @str, "$_=". $param{$_}->datetime 
+        }
+        elsif ( defined $param{$_} ) {
+            push @str, "$_=". $param{$_} 
+        }
+        else {
+            push @str, "$_=undef" 
+        }
+        delete $param{$_};
+    }
+    return join(';', @str);
+}
+
 sub recur {
     my $class = shift;
     my %args = @_;
+
+    # TODO: use Params::Validate 
+    die "argument freq is missing"
+        unless $args{freq};
+
+    # warn "recur:"._param_str(%args);
 
     # dtstart / dtend / until
     my $span = 
@@ -33,11 +64,13 @@ sub recur {
             ) if exists $args{until};
     # warn 'SPAN '. $span->{set};
 
+    $args{interval} = 1 unless $args{interval};
+
     if ( exists $args{count} ) 
     {
         # count
         my $n = $args{count};
-        $n *= $args{interval} if exists $args{interval};
+        $n *= $args{interval};
         my $unit = $args{freq};
         $unit =~ s/ly/s/;
         $unit = 'days' if $unit eq 'dais';  # :)
@@ -54,6 +87,17 @@ sub recur {
             delete $args{dtstart} : 
             DateTime->new( year => 2000, month => 1, day => 1 );
     # warn 'DTSTART '. $dtstart->datetime;
+
+    # rewrite: daily-bymonth to yearly-bymonth-bymonthday[1..31]
+    if ( $args{freq} eq 'daily' ) {
+        if ( exists $args{bymonth} &&
+             $args{interval} == 1 ) 
+        {
+            $args{freq} = 'yearly';
+            $args{bymonthday} = [ 1 .. 31 ] unless exists $args{bymonthday};
+            # warn "rewrite recur:"._param_str(%args);
+        }
+    }
 
     # try to make a recurrence using DateTime::Event::Recurrence
         # TODO!
@@ -104,6 +148,46 @@ sub recur {
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
             $base_set = DateTime::Event::Recurrence->daily( %by );
+        }
+    }
+    elsif ( $args{freq} eq 'monthly' ) {
+        unless ( grep { /by/ &&
+                        !/bymonthday/ && 
+                        !/bysecond/ && !/byminute/ && !/byhour/
+                      } keys %args )
+        {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+            $by{days} =    $args{bymonthday} if exists $args{bymonthday};
+            $by{days} =    $dtstart->day unless exists $by{days};
+            $base_set = DateTime::Event::Recurrence->monthly( %by );
+        }
+    }
+    elsif ( $args{freq} eq 'yearly' ) {
+        unless ( grep { /by/ &&
+                        !/bymonth/ &&   # ... !/bymonthday/ &&
+                        !/bysecond/ && !/byminute/ && !/byhour/
+                      } keys %args )
+        {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+            $by{days} =    $args{bymonthday} if exists $args{bymonthday};
+            $by{days} =    $dtstart->day unless exists $by{days};
+            $by{months} =  $args{bymonth} if exists $args{bymonth};
+            $by{months} =  $dtstart->month unless exists $by{months};
+            $base_set = DateTime::Event::Recurrence->yearly( %by );
         }
     }
     if ( $base_set ) 
@@ -244,9 +328,9 @@ sub recur {
     # interval
 
     my $interval;
-    if ( exists $args{interval} )   # || exists $args{count} ) 
+    if ( $args{interval} > 1 )   # || exists $args{count} ) 
     {
-        $args{interval} = 1 unless $args{interval};
+        # $args{interval} = 1 unless $args{interval};
         # $args{count} = INFINITY unless $args{count};
 
         no strict 'refs';
@@ -282,6 +366,7 @@ sub recur {
 
     # check for nonprocessed arguments
     delete $args{freq};
+    delete $args{interval};
     my @args = %args;
     warn "remaining args are not implemented: @args" if @args;
 
