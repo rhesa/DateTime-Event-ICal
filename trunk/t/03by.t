@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 use DateTime;
 use DateTime::Event::ICal;
@@ -48,7 +48,7 @@ use DateTime::Event::ICal;
     $set = DateTime::Event::ICal->recur( 
        freq =>       'yearly',
        dtstart =>    $dt1,
-       byweekno =>    [ 2, 12 ],
+       byweekno =>   [ 2, 12 ],
     );
 
     @dt = $set->as_list( start => $dt1,
@@ -63,7 +63,7 @@ use DateTime::Event::ICal;
     $set = DateTime::Event::ICal->recur( 
        freq =>       'yearly',
        dtstart =>    $dt1->clone->add( days => 1 ),
-       byweekno =>    [ 2, 12 ],
+       byweekno =>   [ 2, 12 ],
     );
 
     @dt = $set->as_list( start => $dt1,
@@ -77,7 +77,7 @@ use DateTime::Event::ICal;
     $set = DateTime::Event::ICal->recur( 
        freq =>       'yearly',
        dtstart =>    $dt1,
-       byday =>    [ '1fr', '2fr', '-1tu' ],
+       byday =>      [ '1fr', '2fr', '-1tu' ],
     );
 
     @dt = $set->as_list( start => $dt1,
@@ -86,6 +86,26 @@ use DateTime::Event::ICal;
     is( $r,
         '2003-12-30T12:10:45 2004-01-02T12:10:45 2004-01-09T12:10:45',
         "yearly, dtstart, byday=1fr,2fr,-1tu" );
+
+TODO: { 
+    local $TODO = "1FR does not accept multiple hours/minutes/seconds";
+
+    # YEARLY BYDAY=1FR HOUR
+    $set = DateTime::Event::ICal->recur(
+       freq =>       'yearly',
+       dtstart =>    $dt1,
+       byday =>      [ '1fr', '2fr', '-1tu' ],
+       byhour =>     [ 10, 14 ],
+    );
+
+    @dt = $set->as_list( start => $dt1,
+                         end => $dt1->clone->add( years => 1 ) );
+    $r = join(' ', map { $_->datetime } @dt);
+    is( $r,
+        '2003-12-30T12:10:45 ...',
+        "yearly, dtstart, byday=1fr,2fr,-1tu, byhour" );
+
+  } #  /TODO
 
 }
 
