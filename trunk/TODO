@@ -1,9 +1,13 @@
 TODO list for Perl module DateTime-Event-ICal
 
-* parser ?
+* parser ? -- DateTime::Format::ICal, maybe
 
-* until 
-* interval
-* dtstart
 * "byday -2 friday"
+
+* the implementation of 'select' in Set::Infinite is incomplete
+  and doesn't have the 'last' attribute. -- should be implemented!
+
+* import Date::Set RFC2445 recurrence tests
+
+* POD for recur() attributes
 

@@ -6,11 +6,12 @@ use Carp;
 use DateTime;
 use DateTime::Set;
 use DateTime::Span;
+use DateTime::SpanSet;
 use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.00_00';
+$VERSION = '0.00_01';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -31,11 +32,13 @@ sub recur {
     $span = $span->complement(
                 DateTime::Span->from_datetimes( after => delete $args{until} )
             ) if exists $args{until};
+    # warn 'SPAN '. $span->{set};
 
     # setup the "default time"
     my $dtstart = exists $args{dtstart} ?
             delete $args{dtstart} : 
             DateTime->new( year => 2000, month => 1, day => 1 );
+    # warn 'DTSTART '. $dtstart->datetime;
 
     my %by;
     # bysecond byminute byhour
@@ -69,12 +72,36 @@ sub recur {
     # freq
     no strict 'refs';
     my $base_set = &{"DateTime::Event::Recurrence::$args{freq}"} ( undef, %by );
+    # warn 'BASE-SET '. $base_set->intersection($span)->{set};
+
+    # interval count
+    my $interval;
+    if ( exists $args{interval} || exists $args{count} ) {
+
+        $args{interval} = 1 unless $args{interval};
+        $args{count} = INFINITY unless $args{count};
+
+        my $interval_base_set = &{"DateTime::Event::Recurrence::$args{freq}"};
+        my $interval_spanset = DateTime::SpanSet->from_sets(
+                 start_set => $interval_base_set,
+                 end_set =>   $interval_base_set );
+        $interval_spanset = $interval_spanset->intersection( $span );
+        # note: 'select' is a Set::Infinite method,
+        #       we have to rebless it to DateTime::SpanSet
+        my $interval_set_inf = $interval_spanset->{set}
+                  ->select( 
+                      freq => $args{interval}, 
+                      count => $args{count} );
+        # warn 'INTERVAL,COUNT '.$interval_set_inf;
+        $interval = bless { set => $interval_set_inf }, 'DateTime::SpanSet';
+
+        delete $args{interval};
+        delete $args{count};
+    }
 
     # TODO!
 
-    # count
-
-    # interval
+    $base_set = $base_set->intersection( $interval ) if $interval;
 
     # wkst
     # bysetpos

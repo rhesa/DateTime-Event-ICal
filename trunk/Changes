@@ -1,2 +1,6 @@
 Changes for DateTime-Event-ICal
 
+0.00_01
+- base implementation:
+  until, interval, dtstart, dtend, until
+
