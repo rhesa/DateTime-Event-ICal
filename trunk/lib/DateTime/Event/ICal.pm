@@ -167,6 +167,7 @@ sub _monthly_recurrence {
             elsif ( exists $args{byday} )
             {   
                 # process byday = "1FR" and "FR"
+                $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
                 my @week_days;
                 my @indexed_week_days;
                 for ( @{$args{byday}} ) { 
