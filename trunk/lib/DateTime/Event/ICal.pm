@@ -19,7 +19,17 @@ use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4,
                  fr => 5, sa => 6, su => 7 );
 
-# internal debugging method - formats the argument list
+my %freqs = ( 
+    secondly => { name => 'second', names => 'seconds' },
+    minutely => { name => 'minute', names => 'minutes' },
+    hourly =>   { name => 'hour',   names => 'hours' },
+    daily =>    { name => 'day',    names => 'days' },
+    monthly =>  { name => 'month',  names => 'months' },
+    weekly =>   { name => 'week',   names => 'weeks' },
+    yearly =>   { name => 'year',   names => 'years' },
+);
+
+# internal debugging method - formats the argument list for error messages
 sub _param_str {
     my %param = @_;
     my @str;
@@ -99,6 +109,7 @@ sub _daily_recurrence {
             $by{hours} =   $dtstart->hour unless exists $by{hours};
     delete $$argsref{$_}
         for qw( interval bysecond byminute byhour );
+    # TODO: (maybe) - same thing if byweekno exists
     $$argsref{bymonthday} = [ 1 .. 31 ] 
         if exists $args{bymonth} && ! exists $args{bymonthday};
     return DateTime::Event::Recurrence->daily( %by );
@@ -116,7 +127,7 @@ sub _weekly_recurrence {
             $by{minutes} = $dtstart->minute unless exists $by{minutes};
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
-            # TODO: -1fr should work too
+            # TODO: -1fr should work too?
             $by{days} = exists $args{byday} ?
                         [ map { $weekdays{$_} } @{$args{byday}} ] :
                         $dtstart->day_of_week ;
@@ -297,6 +308,54 @@ sub _recur_1fr {
     );
 }
 
+# bysetpos constructor
+
+sub _recur_bysetpos {
+    # ( freq , interval, bysetpos, recurrence )
+    my %args = @_;
+    # my $names = $freqs{ $args{freq} }{names};
+    # my $name =  $freqs{ $args{freq} }{name};
+    no strict "refs";
+    my $base_set = &{"DateTime::Event::Recurrence::$args{freq}"}();
+    # die "invalid freq parameter ($args{freq})" 
+    #    unless exists $DateTime::Event::Recurrence::truncate_interval{ $names };
+    #my $truncate_interval_sub = 
+    #    $DateTime::Event::Recurrence::truncate_interval{ $names };
+    #my $next_unit_sub =
+    #    $DateTime::Event::Recurrence::next_unit{ $names };
+    #my $previous_unit_sub =
+    #    $DateTime::Event::Recurrence::previous_unit{ $names };
+    # print STDERR "bysetpos:  [@{$args{bysetpos}}]\n";
+    for ( @{$args{bysetpos}} ) { $_-- if $_ > 0 }
+    return DateTime::Set->from_recurrence (
+        next =>
+        sub {
+            my $self = $_[0]->clone;
+            # warn "bysetopos: next of ".$_[0]->datetime;
+            # print STDERR "    previous: ".$base_set->current( $_[0] )->datetime."\n";
+            my $start = $base_set->current( $_[0] );
+          while(1) {
+            my $end   = $base_set->next( $start->clone );
+            # print STDERR "    base: ".$start->datetime." ".$end->datetime."\n";
+            my $span = DateTime::Span->from_datetimes( 
+                          start => $start,
+                          before => $end );
+            # print STDERR "    done span\n";
+            my $subset = $args{recurrence}->intersection( $span );
+            my @list = $subset->as_list;
+            # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+            # select
+            @list = sort @list[ @{$args{bysetpos}} ];
+            # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
+            for ( @list ) {
+                return $_ if $_ > $self;
+            }
+            $start = $end;
+          }  # /while
+        }
+    );
+}
+
 # main recurrence constructor
 
 sub recur {
@@ -375,7 +434,6 @@ sub recur {
         die "invalid freq ($args{freq})";
     }
 
-    delete $args{freq};
     delete $args{wkst};    # TODO: wkst
 
     # warn "\ncomplex recur:"._param_str(%args);
@@ -422,9 +480,19 @@ sub recur {
     # wkst
     # bysetpos
 
+    if ( exists $args{bysetpos} ) {
+        $base_set = _recur_bysetpos (
+            freq => $args{freq},
+            interval => $args{interval},
+            bysetpos => $args{bysetpos},
+            recurrence => $base_set );
+        delete $args{bysetpos};
+    }
+
     # check for nonprocessed arguments
+    delete $args{freq};
     my @args = %args;
-    warn "remaining args are not implemented: @args" if @args;
+    die "these arguments are not implemented: "._param_str(%args) if @args;
 
     return $base_set;
 }
@@ -575,8 +643,6 @@ Month -1 is december.
 =back
 
 =head1 VERSION NOTES
-
-bysetpos is not implemented.
 
 byday=1fr gives wrong results if byhour, byminute, or bysecond 
 have 2 or more options.

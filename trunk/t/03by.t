@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 use DateTime;
 use DateTime::Event::ICal;
@@ -106,6 +106,28 @@ TODO: {
         "yearly, dtstart, byday=1fr,2fr,-1tu, byhour" );
 
   } #  /TODO
+
+
+
+    # MONTHLY BYSETPOS
+    $set = DateTime::Event::ICal->recur(
+       freq =>       'monthly',
+       dtstart =>    $dt1,
+       bymonthday => [ -1, -2, -3, -4, -5, -6 ],
+       bysetpos =>   [ 3, -2 ],
+    );
+
+    @dt = $set->as_list( start => $dt1,
+                         end => $dt1->clone->add( months => 3 ) );
+    $r = join(' ', map { $_->datetime } @dt);
+    is( $r,
+        '2003-04-29T12:10:45 2003-04-30T12:10:45 2003-05-28T12:10:45 '. 
+        '2003-05-30T12:10:45 2003-06-27T12:10:45 2003-06-29T12:10:45 '.
+        '2003-07-28T12:10:45',
+        "monthly, bymonthday, bysetpos" );
+
+  
+
 
 }
 
