@@ -615,8 +615,6 @@ $title="***  Every other month on the 1st and last Sunday of the month for 1  **
             # ->union( $dt19970905T090000 )
             ->intersection( $period_1995_1999 );
 
-TODO: {
-    local $TODO = "interval with byday fails";
 
     is("".$a->{set}, 
     '1997-09-07T09:00:00,1997-09-28T09:00:00,' .
@@ -625,7 +623,6 @@ TODO: {
     '1998-03-01T09:00:00,1998-03-29T09:00:00,' .
     '1998-05-03T09:00:00,1998-05-31T09:00:00' ,
     $title);
-}
 
 
 $title="***  Monthly on the second to last Monday of the month for 6 months  ***";

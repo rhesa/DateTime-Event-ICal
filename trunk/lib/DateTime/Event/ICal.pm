@@ -253,6 +253,7 @@ sub _recur_1fr {
     if ( $args{freq} eq 'monthly' ) {
         $base_duration = 'months';
         delete $args{freq};
+        # warn "creating base set with "._param_str( %args );
         $positive_base_set = DateTime::Event::Recurrence->monthly( %args )
     }
     elsif ( $args{freq} eq 'yearly' ) {
@@ -270,7 +271,7 @@ sub _recur_1fr {
         next =>
         sub {
             my $self = $_[0]->clone;
-            my $base = $positive_base_set->previous( $positive_base_set->next( $_[0] ) );
+            my $base = $positive_base_set->current( $_[0] ) ;
             my $start;
 
             while(1) {
@@ -302,7 +303,7 @@ sub _recur_1fr {
                     # print "    result: ". $r->datetime. "\n";
                     return $r;
                 }
-                $base->add( $base_duration => 1 );
+                $base = $positive_base_set->next( $base ) ;
             }
         }
     );
