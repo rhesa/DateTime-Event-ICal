@@ -87,8 +87,6 @@ use DateTime::Event::ICal;
         '2003-12-30T12:10:45 2004-01-02T12:10:45 2004-01-09T12:10:45',
         "yearly, dtstart, byday=1fr,2fr,-1tu" );
 
-TODO: { 
-    local $TODO = "1FR does not accept multiple hours/minutes/seconds";
 
     # YEARLY BYDAY=1FR HOUR
     $set = DateTime::Event::ICal->recur(
@@ -102,10 +100,10 @@ TODO: {
                          end => $dt1->clone->add( years => 1 ) );
     $r = join(' ', map { $_->datetime } @dt);
     is( $r,
-        '2003-12-30T12:10:45 ...',
+        '2003-12-30T10:10:45 2003-12-30T14:10:45 '.
+        '2004-01-02T10:10:45 2004-01-02T14:10:45 '.
+        '2004-01-09T10:10:45 2004-01-09T14:10:45',
         "yearly, dtstart, byday=1fr,2fr,-1tu, byhour" );
-
-  } #  /TODO
 
 
 

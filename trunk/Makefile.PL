@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker;
                    ABSTRACT     => 'DateTime rfc2445 recurrences',
 
                    PREREQ_PM    => { 'DateTime' => 0,
-                                     'DateTime::Event::Recurrence' => 0,
+                                     'DateTime::Event::Recurrence' => 0.03,
                                    },
                  );
 

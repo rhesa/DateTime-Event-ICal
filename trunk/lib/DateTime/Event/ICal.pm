@@ -234,8 +234,8 @@ sub _yearly_recurrence {
 sub _recur_1fr {
     # ( freq , interval, dtstart, byday[ week_count . week_day ] )
     my %args = @_;
-    my $positive_base_set;
-    my @positive_days;
+    my $base_set;
+    my %days;
     my $base_duration;
 
     # parse byday
@@ -245,68 +245,39 @@ sub _recur_1fr {
         die "week count ($count) can't be zero" unless $count;
         my $week_day = $weekdays{ $day_name };
         die "invalid week day ($day_name)" unless $week_day;
-        push @positive_days, [ $count, $week_day ];
+        push @{$days{$day_name}}, $count;
 
     }
     delete $args{byday};
 
-    if ( $args{freq} eq 'monthly' ) {
-        $base_duration = 'months';
-        delete $args{freq};
-        # warn "creating base set with "._param_str( %args );
-        $positive_base_set = DateTime::Event::Recurrence->monthly( %args )
-    }
-    elsif ( $args{freq} eq 'yearly' ) {
-        $base_duration = 'years';
-        delete $args{freq};
-        $positive_base_set = DateTime::Event::Recurrence->yearly( %args )
-    }
-    else {
-        die "invalid freq ($args{freq})";
-    }
+    my $result;
+    for ( keys %days ) 
+    {
+        my %_args = %args;
+        $_args{weeks} = $days{$_};
+        $_args{week_start_day} = '1'.$_;
+        # warn "creating base set with $_ "._param_str( %_args );
 
-    # return a callback-recurrence
-
-    return DateTime::Set->from_recurrence (
-        next =>
-        sub {
-            my $self = $_[0]->clone;
-            my $base = $positive_base_set->current( $_[0] ) ;
-            my $start;
-
-            while(1) {
-
-                my @result;
-                for ( @positive_days ) 
-                {
-                    my ( $count, $week_day ) = @$_;
-
-                    # warn "date ".$self->datetime." base ".$base->datetime." weeks $count weekday $week_day";
-                    $start = $base->clone;
-                    $start->add( $base_duration => 1, days => 7 ) if $count < 0;
-                    $start->add( weeks => $count - 1);
-                    # print STDERR "    start ".$start->datetime." weekday ".$start->day_of_week."\n";
-                    my $dow = $start->day_of_week;
-                    my $delta_days = $dow <= $week_day ? 
-                                     $week_day - $dow :
-                                     7 + $week_day - $dow;
-                    $start->add( days => $delta_days );
-                    # print STDERR "    start ".$start->datetime." weekday ".$start->day_of_week."\n";
-                    push @result, $start if $start > $self;
-                }
-                if ( @result ) {
-                    # print "    $base_duration results: ". join(",", map { $_->datetime } @result ), "\n";
-                    my $r = $result[0];
-                    for ( @result[ 1 .. $#result ] ) {
-                        $r = $_ if $r > $_;
-                    }
-                    # print "    result: ". $r->datetime. "\n";
-                    return $r;
-                }
-                $base = $positive_base_set->next( $base ) ;
-            }
+        if ( $_args{freq} eq 'monthly' ) {
+            $base_duration = 'months';
+            delete $_args{freq};
+            # warn "creating base set with "._param_str( %args );
+            $base_set = DateTime::Event::Recurrence->monthly( %_args )
         }
-    );
+        elsif ( $_args{freq} eq 'yearly' ) {
+            $base_duration = 'years';
+            delete $_args{freq};
+            $base_set = DateTime::Event::Recurrence->yearly( %_args )
+        }
+        else {
+            die "invalid freq ($_args{freq})";
+        }
+
+        $result = $result ?
+                  $result->union( $base_set ) :
+                  $base_set;
+    }
+    return $result;
 }
 
 # bysetpos constructor
@@ -649,9 +620,6 @@ Month -1 is december.
 =back
 
 =head1 VERSION NOTES
-
-Option C<byday => '1fr'> gives wrong results if one of
-byhour, byminute, or bysecond have 2 or more options.
 
 Option C<wkst> is not implemented.
 

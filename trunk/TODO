@@ -1,7 +1,6 @@
 TODO list for Perl module DateTime-Event-ICal
 
 * "byday -2 friday"
-  - define "previous" sub ?
   - use yearly;-1su to define 'wkst' !
   - test overflow
 
