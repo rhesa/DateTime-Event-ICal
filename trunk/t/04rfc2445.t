@@ -25,6 +25,10 @@ my $dt19970902T090000 = DateTime->new(
     year => 1997, month => 9, day => 2, hour => 9,
     # time_zone => 'US-Eastern',
  );
+my $dt19971007T000000= DateTime->new(
+    year => 1997, month => 10, day => 7,
+    # time_zone => 'US-Eastern',
+ );
 my $dt19971224T000000 = DateTime->new(
     year => 1997, month => 12, day => 24, 
     # time_zone => 'US-Eastern',
@@ -412,8 +416,6 @@ $title="***  Every other week - forever  ***";
         $title);
 
 
-__END__
-
 #### TEST 11 ##########
 
 $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
@@ -428,35 +430,46 @@ $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
 #
     # FIRST
 
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY',UNTIL=>'1997-10-07T00:00:00',WKST=>'SU',BYDAY=>[qw(TU TH)] )
-        ->occurrences( period => $period );
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000,
+            freq =>     'weekly',
+            until =>    $dt19971007T000000,
+            wkst =>     'su',   
+            byday =>    [ 'tu', 'th' ],
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set},
         '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
         '1997-09-09T09:00:00,1997-09-11T09:00:00,1997-09-16T09:00:00,' .
-        '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,1997-09-30T09:00:00,' .
-        '1997-10-02T09:00:00',
+        '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,' .
+        '1997-09-30T09:00:00,1997-10-02T09:00:00',
         $title);
-
-$Date::Set::DEBUG = 0;
 
     # SECOND
 
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule( FREQ=>'WEEKLY',COUNT=>10,WKST=>'SU',BYDAY=>[qw(TU TH)] )
-        ->occurrences( period => $period );
+TODO: {
+    local $TODO = 'count is working on freq instead of on the result set';
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000,
+            freq =>     'weekly',
+            count =>    10,
+            wkst =>     'su',
+            byday =>    [ 'tu', 'th' ],
+            )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set}, 
         '1997-09-02T09:00:00,1997-09-04T09:00:00,' .
         '1997-09-09T09:00:00,1997-09-11T09:00:00,1997-09-16T09:00:00,' .
-        '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,1997-09-30T09:00:00,' .
-        '1997-10-02T09:00:00', 
+        '1997-09-18T09:00:00,1997-09-23T09:00:00,1997-09-25T09:00:00,' .
+        '1997-09-30T09:00:00,1997-10-02T09:00:00', 
         $title);
 
-# $Date::Set::DEBUG = 1;
+}  #  /TODO
+
+__END__
 
 $title="***  Every other week on Monday, Wednesday and Friday until December 24  ***";
 #   1997, but starting on Tuesday, September 2, 1997:
