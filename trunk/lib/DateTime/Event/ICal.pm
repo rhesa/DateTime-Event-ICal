@@ -588,9 +588,8 @@ sub recur {
     my @args = %args;
     die "these arguments are not implemented: "._param_str(%args) if @args;
 
-    # note: the {as_ical} key is a DT::Event::ICal extension
-    #   to Set::Infinite
-    $base_set->{set}{as_ical} = [ uc('recur:'.$recur_str) ];
+    bless $base_set, 'DateTime::Set::ICal';
+    $base_set->set_ical( include => [ uc('recur:'.$recur_str) ] ); 
 
     return $base_set;
 }
