@@ -7,7 +7,7 @@ use DateTime;
 use DateTime::Set;
 use DateTime::Span;
 use DateTime::SpanSet;
-use DateTime::Event::Recurrence;
+use DateTime::Event::Recurrence 0.06;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
