@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.00_02';
+$VERSION = '0.00_03';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -127,6 +127,10 @@ sub _weekly_recurrence {
             $by{minutes} = $dtstart->minute unless exists $by{minutes};
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
+
+            $by{week_start_day} = $args{wkst} ?
+                                  $args{wkst} : 'mo';
+
             # -1fr works too
             $by{days} = exists $args{byday} ?
                         [ map { $_ =~ s/[\-\+\d]+//; $weekdays{$_} } 
@@ -152,6 +156,9 @@ sub _monthly_recurrence {
             $by{minutes} =  $dtstart->minute unless exists $by{minutes};
             $by{hours} =    $args{byhour} if exists $args{byhour};
             $by{hours} =    $dtstart->hour unless exists $by{hours};
+
+            $by{week_start_day} = $args{wkst} ?
+                                  $args{wkst} : '1mo';
 
             if ( exists $args{bymonthday} )
             {
@@ -205,6 +212,10 @@ sub _yearly_recurrence {
             $by{minutes} = $dtstart->minute unless exists $by{minutes};
             $by{hours} =   $args{byhour} if exists $args{byhour};
             $by{hours} =   $dtstart->hour unless exists $by{hours};
+
+            $by{week_start_day} = $args{wkst} ?
+                                  $args{wkst} : 'mo';
+            # warn "wkst $by{week_start_day}";
 
             if ( exists $args{bymonth} )
             {
@@ -326,7 +337,7 @@ sub _recur_bysetpos {
     #    $DateTime::Event::Recurrence::previous_unit{ $names };
 
     $args{bysetpos} = [ $args{bysetpos} ]
-        unless ref( @{$args{bysetpos}} );
+        unless ref( $args{bysetpos} );
     # die "invalid bysetpos parameter [@{$args{bysetpos}}]" 
     #     unless @{$args{bysetpos}};
     # print STDERR "bysetpos:  [@{$args{bysetpos}}]\n";
@@ -337,6 +348,7 @@ sub _recur_bysetpos {
             return undef unless defined $_[0];
             my $self = $_[0]->clone;
             # warn "bysetpos: next of ".$_[0]->datetime;
+            # print STDERR "    list [@{$args{bysetpos}}] \n";
             # print STDERR "    previous: ".$base_set->current( $_[0] )->datetime."\n";
             my $start = $base_set->current( $_[0] );
             while(1) {
@@ -353,6 +365,7 @@ sub _recur_bysetpos {
                 @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
                 # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
                 for ( @list ) {
+                    # print STDERR "    choose: ".$_->datetime."\n" if $_ > $self;
                     return $_ if $_ > $self;
                 }
                 $start = $end;
@@ -394,6 +407,7 @@ sub _recur_bysetpos {
 sub recur {
     my $class = shift;
     my %args = @_;
+    my %args_backup = @_;
 
     if ( exists $args{count} )
     {
@@ -495,6 +509,18 @@ sub recur {
         $by_week_day = _weekly_recurrence($dtstart, \%args);
     }
 
+    my $by_hour;
+    if ( exists $args{byhour} ) 
+    {
+        my %by = %args;
+        $by{byminute} = $args_backup{byminute} if $args_backup{byminute};
+        $by{byminute} = [ 0 .. 59 ] if $args{freq} eq 'minutely';
+        $by{bysecond} = $args_backup{bysecond} if $args_backup{bysecond};
+        $by{bysecond} = [ 0 .. 59 ] if $args{freq} eq 'secondly';
+        $by_hour = _daily_recurrence($dtstart, \%by);
+        delete $args{byhour};
+    }
+
     # join the rules together
 
     $base_set = $base_set && $by_year_day ?
@@ -506,6 +532,9 @@ sub recur {
     $base_set = $base_set && $by_week_day ?
                 $base_set->intersection( $by_week_day ) :
                 ( $base_set ? $base_set : $by_week_day );
+    $base_set = $base_set && $by_hour ?
+                $base_set->intersection( $by_hour ) :
+                ( $base_set ? $base_set : $by_hour );
 
     # TODO:
     # wkst

@@ -1,5 +1,7 @@
 Changes for DateTime-Event-ICal
 
+- fixed the order of operations: bysetpos x span
+
 0.00_02
 - bysetpos
 - count

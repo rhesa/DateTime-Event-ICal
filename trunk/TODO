@@ -10,16 +10,16 @@ TODO list for Perl module DateTime-Event-ICal
 
 * the implementation of 'select' in Set::Infinite is incomplete
   and doesn't have the 'last' attribute. -- should be implemented!
+  Note: this is not a problem because it is only used in 'count', 
+        which generates finite sets. 
 
 * finish importing Date::Set RFC2445 recurrence tests
 
 * wkst
 
 * bysetpos
-  - implement "previous" sub
   - use some kind of memoization
   - test overflow
-  - optimize DateTime::Set "current" sub
 
 * byweekno - test with 'daily'
 

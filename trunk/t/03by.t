@@ -106,9 +106,6 @@ use DateTime::Event::ICal;
         "yearly, dtstart, byday=1fr,2fr,-1tu, byhour" );
 
 
-SKIP: {
-    skip "Infinite loop", 1 if 1;
-
     # MONTHLY BYSETPOS
     $set = DateTime::Event::ICal->recur(
        freq =>       'monthly',
@@ -122,11 +119,11 @@ SKIP: {
                          end => $dt1->clone->add( months => 3 ) );
     $r = join(' ', map { $_->datetime } @dt);
     is( $r,
-        '2003-04-29T12:10:45 2003-04-30T12:10:45 2003-05-28T12:10:45 '. 
+        '2003-04-29T12:10:45 '. 
+        '2003-05-28T12:10:45 '. 
         '2003-05-30T12:10:45 2003-06-27T12:10:45 2003-06-29T12:10:45 '.
         '2003-07-28T12:10:45',
-        "monthly, bymonthday, bysetpos" );
-}  
+        "monthly, bymonthday, bysetpos" ); 
 
 
 }

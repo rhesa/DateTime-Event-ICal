@@ -473,7 +473,7 @@ $title="***  Every other week - forever  ***";
             dtstart =>  $dt19970902T090000 ,
             freq =>     'weekly',
             interval => 2,
-            wkst =>     'su',   # doesn't make difference here
+            wkst =>     'su',  
             )
             ->intersection( $period_1995_19980201 );
 
@@ -1266,9 +1266,6 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
 #     ...
 #
 
-# SKIP: {
-#    skip "Takes too long", 1 if 1;
-
     $a = DateTime::Event::ICal->recur(
             dtstart =>    $dt19970902T090000 ,
             freq =>       'daily',
@@ -1299,19 +1296,16 @@ $title="***  Every 20 minutes from 9:00 AM to 4:40 PM every day  ***";
         '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
         '1997-09-03T16:20:00,1997-09-03T16:40:00,1997-09-04T09:00:00',
     $title);
-# }
 
 #     recur_by_rule:FREQ=MINUTELY;INTERVAL=20;BYHOUR=9,10,11,12,13,14,15,16
 
-SKIP: {
-    skip "Not implemented", 1 if 1;
 
     $a = DateTime::Event::ICal->recur(
             dtstart =>    $dt19970902T090000 ,
             freq =>       'minutely',
             interval =>   20,
             byhour =>     [ 9,10,11,12,13,14,15,16 ], )
-            ->intersection( $period_1995_1999 );
+            ->intersection( $period_1995_19970904T090000 );
 
     is("".$a->{set},
         '1997-09-02T09:00:00,1997-09-02T09:20:00,' .
@@ -1334,9 +1328,9 @@ SKIP: {
         '1997-09-03T14:00:00,1997-09-03T14:20:00,' .
         '1997-09-03T14:40:00,1997-09-03T15:00:00,1997-09-03T15:20:00,' .
         '1997-09-03T15:40:00,1997-09-03T16:00:00,' .
-        '1997-09-03T16:20:00,1997-09-03T16:40:00',
+        '1997-09-03T16:20:00,1997-09-03T16:40:00,1997-09-04T09:00:00',
     $title);
-}
+
 
 $title="***  An example where the days generated makes a difference because of WKST  ***";
 #
@@ -1373,13 +1367,10 @@ $title="***  changing only WKST from MO to SU, yields different results...  ***"
             wkst =>       'su' )
             ->intersection( $period_1995_1999 );
 
-TODO: {
-    local $TODO = 'WKST not implemented';
 
     is("".$a->{set}, 
         '1997-08-05T09:00:00,1997-08-17T09:00:00,' .
         '1997-08-19T09:00:00,1997-08-31T09:00:00', $title);
-}
 
 __END__
     # another test using this result:
