@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.0304';
+$VERSION = '0.04';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -245,14 +245,13 @@ sub _yearly_recurrence {
     }
     elsif ( exists $args{byday} )
     {  
-                # process byday = "1FR" and "FR"
+                $by{months} =  [ 1 .. 12 ];
 
-                $by{byday} =    $args{byday};
-                # don't use 'FR'-style here
-
-                delete $$argsref{$_} 
-                    for qw( interval bysecond byminute byhour byday );
-                return _recur_1fr( %by, freq => 'yearly' );
+                $by{days} =    $args{bymonthday} if exists $args{bymonthday};
+                $by{days} =    [ 1 .. 31 ]
+                    if ! exists $by{days};
+                $by{days} =    $dtstart->day unless exists $by{days};
+                delete $$argsref{bymonthday};
     }
     else 
     {

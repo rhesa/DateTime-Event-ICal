@@ -1,16 +1,7 @@
 TODO list for Perl module DateTime-Event-ICal
 
-* optimize byday=>['we','fr'] - a lot!
-  DONE:
-    - byday with many options makes tests very slow 
-      see: t/rfc2445.t tests 34, 35
-    - bysetpos might get faster if it used 'next'/'previous'
-      instead of 'intersection' - may need memoization
-  TODO:
-    - use this algorithm when there are more arguments.
-
-* sub _recur_1fr()
-  - test: freq=>yearly byday=>we
+* optimize yealy/monthly + interval + byday
+  - uses intersection with "all days"
 
 * "byday -2 friday"
   - test overflow
