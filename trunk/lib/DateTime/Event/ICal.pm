@@ -48,6 +48,16 @@ sub recur {
     my $class = shift;
     my %args = @_;
 
+    if ( exists $args{count} )
+    {
+        # count
+        my $n = $args{count};
+        delete $args{count};
+        my $count_inf = $class->recur( %args )->{set}
+                  ->select( count => $n );
+        return bless { set => $count_inf }, 'DateTime::Set';
+    }
+
     # TODO: use Params::Validate 
     die "argument freq is missing"
         unless $args{freq};
@@ -68,22 +78,6 @@ sub recur {
     # warn 'SPAN '. $span->{set};
 
     $args{interval} = 1 unless $args{interval};
-
-    if ( exists $args{count} ) 
-    {
-        # count
-        my $n = $args{count};
-        $n *= $args{interval};
-        my $unit = $args{freq};
-        $unit =~ s/ly/s/;
-        $unit = 'days' if $unit eq 'dais';  # :)
-        # warn "count $args{count} $unit => $n ";
-        $span = $span->complement(
-                    DateTime::Span->from_datetimes( 
-                        start => $args{dtstart}->clone->add( $unit => $n )
-                ) );
-        delete $args{count};
-    }
 
     # setup the "default time"
     my $dtstart = exists $args{dtstart} ?
@@ -451,6 +445,9 @@ given recurrence.
 =item * dtstart
 
 C<dtstart> is not included in the recurrence, unless it satisfy the rule.
+
+The set can thus be used for creating exclusion rules (rfc2445 C<exrule>),
+which don't include C<dtstart>.
 
 =item * dtend
 

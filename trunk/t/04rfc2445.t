@@ -448,9 +448,6 @@ $title="***  Weekly on Tuesday and Thursday for 5 weeks  ***";
 
     # SECOND
 
-TODO: {
-    local $TODO = 'count is working on freq instead of on the result set';
-
     $a = DateTime::Event::ICal->recur(
             dtstart =>  $dt19970902T090000,
             freq =>     'weekly',
@@ -467,9 +464,6 @@ TODO: {
         '1997-09-30T09:00:00,1997-10-02T09:00:00', 
         $title);
 
-}  #  /TODO
-
-__END__
 
 $title="***  Every other week on Monday, Wednesday and Friday until December 24  ***";
 #   1997, but starting on Tuesday, September 2, 1997:
@@ -482,26 +476,32 @@ $title="***  Every other week on Monday, Wednesday and Friday until December 24 
 #         (1997 9:00 AM EST)October 27,29,31;November 10,12,14,24,26,28;
 #                           December 8,10,12,22
 #
-    # make a period from 1995 until 1999
-    $period = Date::Set->period( time => ['19950101Z', '19990101Z'] );
-    $a = Date::Set->event->dtstart( start => '1997-09-02T09:00:00' )
-        ->recur_by_rule(
-        RRULE => 'FREQ=WEEKLY;INTERVAL=2;UNTIL=1997-12-24T00:00:00;WKST=SU;BYDAY=MO,WE,FR' )
-        ->occurrences( period => $period );
+
+    $a = DateTime::Event::ICal->recur(
+            dtstart =>  $dt19970902T090000,
+            freq =>     'weekly',
+            interval => 2,
+            until =>    $dt19971224T000000,
+            wkst =>     'su',
+            byday =>    [ 'mo', 'we', 'fr' ],
+            )
+            ->union( $dt19970902T090000 )
+            ->intersection( $period_1995_1999 );
+
     is("".$a->{set},
     '1997-09-02T09:00:00,1997-09-03T09:00:00,' .
-        '1997-09-05T09:00:00,1997-09-15T09:00:00,1997-09-17T09:00:00,' .
-        '1997-09-19T09:00:00,1997-09-29T09:00:00,' .
+    '1997-09-05T09:00:00,1997-09-15T09:00:00,1997-09-17T09:00:00,' .
+    '1997-09-19T09:00:00,1997-09-29T09:00:00,' .
     '1997-10-01T09:00:00,1997-10-03T09:00:00,' .
-        '1997-10-13T09:00:00,1997-10-15T09:00:00,1997-10-17T09:00:00,' .
+    '1997-10-13T09:00:00,1997-10-15T09:00:00,1997-10-17T09:00:00,' .
     '1997-10-27T09:00:00,1997-10-29T09:00:00,1997-10-31T09:00:00,' .
     '1997-11-10T09:00:00,1997-11-12T09:00:00,' .
-        '1997-11-14T09:00:00,1997-11-24T09:00:00,1997-11-26T09:00:00,1997-11-28T09:00:00,' .
-    '1997-12-08T09:00:00,1997-12-10T09:00:00,' .
-        '1997-12-12T09:00:00,1997-12-22T09:00:00',
+    '1997-11-14T09:00:00,1997-11-24T09:00:00,1997-11-26T09:00:00,' .
+    '1997-11-28T09:00:00,1997-12-08T09:00:00,1997-12-10T09:00:00,' .
+    '1997-12-12T09:00:00,1997-12-22T09:00:00',
     $title);
 
-$Date::Set::DEBUG = 0;
+__END__
 
 ######## TEST 14
 
