@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.00_01';
+$VERSION = '0.00_02';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -33,13 +33,89 @@ sub recur {
             ) if exists $args{until};
     # warn 'SPAN '. $span->{set};
 
+    if ( exists $args{count} ) 
+    {
+        # count
+        my $n = $args{count};
+        $n *= $args{interval} if exists $args{interval};
+        my $unit = $args{freq};
+        $unit =~ s/ly/s/;
+        $unit = 'days' if $unit eq 'dais';  # :)
+        # warn "count $args{count} $unit => $n ";
+        $span = $span->complement(
+                    DateTime::Span->from_datetimes( 
+                        start => $args{dtstart}->clone->add( $unit => $n )
+                ) );
+        delete $args{count};
+    }
+
     # setup the "default time"
     my $dtstart = exists $args{dtstart} ?
             delete $args{dtstart} : 
             DateTime->new( year => 2000, month => 1, day => 1 );
     # warn 'DTSTART '. $dtstart->datetime;
 
+    # try to make a recurrence using DateTime::Event::Recurrence
+        # TODO!
+        # freq = any
+        # interval = any
+        # byxxx = matching freq: hourly,byminute,bysecond
+
+    my $base_set;
     my %by;
+    if ( $args{freq} eq 'secondly' ) {
+        unless ( grep { /by/ } keys %args ) {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =    $dtstart;
+            $base_set = DateTime::Event::Recurrence->secondly( %by );
+        }
+    }
+    elsif ( $args{freq} eq 'minutely' ) {
+        unless ( grep { /by/ && !/bysecond/ } keys %args ) {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;  
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $base_set = DateTime::Event::Recurrence->minutely( %by );
+        }
+    }
+    elsif ( $args{freq} eq 'hourly' ) {
+        unless ( grep { /by/ && !/bysecond/ && !/byminute/ } keys %args ) {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $base_set = DateTime::Event::Recurrence->hourly( %by );
+        }
+    }
+    elsif ( $args{freq} eq 'daily' ) {
+        unless ( grep { /by/ &&
+                        !/bysecond/ && !/byminute/ && !/byhour/
+                      } keys %args ) 
+        {
+            $by{interval} = $args{interval} if exists $args{interval};
+            $by{start} =   $dtstart;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+            $base_set = DateTime::Event::Recurrence->daily( %by );
+        }
+    }
+    if ( $base_set ) 
+    {
+        return $base_set->intersection( $span ) if $span;
+        return $base_set;
+    }
+
+    # not a simple recurrence.
+    # make the recurrence, step by step
+
+    %by = ();
     # bysecond / byminute / byhour
 
     # TODO: test with leap seconds
@@ -144,13 +220,16 @@ sub recur {
     unless ( $has_day ) 
     {
         no strict 'refs';
+
+        $by{interval} = delete $args{interval} if $args{interval};
+
         $by_hour = &{"DateTime::Event::Recurrence::$args{freq}"} ( undef, %by );
     }
     # warn 'BASE-SET '. $base_set->intersection($span)->{set};
 
     # join the rules together
 
-    my $base_set = $by_year_day;
+    $base_set = $by_year_day;
     $base_set = $base_set && $by_month_day ?
                 $base_set->intersection( $by_month_day ) :
                 ( $base_set ? $base_set : $by_month_day );
@@ -162,16 +241,16 @@ sub recur {
                 ( $base_set ? $base_set : $by_hour );
     return DateTime::Set->empty_set unless $base_set;
 
-    # interval / count
+    # interval
 
     my $interval;
-    if ( exists $args{interval} || exists $args{count} ) 
+    if ( exists $args{interval} )   # || exists $args{count} ) 
     {
         $args{interval} = 1 unless $args{interval};
-        $args{count} = INFINITY unless $args{count};
+        # $args{count} = INFINITY unless $args{count};
 
         no strict 'refs';
-        my $interval_base_set = &{"DateTime::Event::Recurrence::$args{freq}"};
+        my $interval_base_set = &{"DateTime::Event::Recurrence::$args{freq}"}();
         my $interval_spanset = DateTime::SpanSet->from_sets(
                  start_set => $interval_base_set,
                  end_set =>   $interval_base_set );
@@ -181,12 +260,13 @@ sub recur {
         my $interval_set_inf = $interval_spanset->{set}
                   ->select( 
                       freq => $args{interval}, 
-                      count => $args{count} );
+                      # count => $args{count} 
+                    );
         # warn 'INTERVAL,COUNT '.$interval_set_inf;
         $interval = bless { set => $interval_set_inf }, 'DateTime::SpanSet';
 
         delete $args{interval};
-        delete $args{count};
+        # delete $args{count};
     }
 
     if ( $interval ) {
