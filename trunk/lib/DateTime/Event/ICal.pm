@@ -18,10 +18,9 @@ use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 
 sub recur {
     my $class = shift;
-    # TODO - insert Params::Validate here!
     my %args = @_;
 
-    # dtstart dtend until
+    # dtstart / dtend / until
     my $span = 
         exists $args{dtstart} ?
             DateTime::Span->from_datetimes( start => $args{dtstart} ) :
@@ -41,22 +40,24 @@ sub recur {
     # warn 'DTSTART '. $dtstart->datetime;
 
     my %by;
-    # bysecond byminute byhour
+    # bysecond / byminute / byhour
 
+    # TODO: test with leap seconds
     $by{seconds} = exists $args{bysecond} ?
                        delete $args{bysecond} : 
                        ( $args{freq} eq 'secondly' ? 
                            [ 0 .. 59, -1 ] : 
                            $dtstart->second );
 
-   $by{minutes} = exists $args{byminute} ?
+    $by{minutes} = exists $args{byminute} ?
                       delete $args{byminute} : 
                       ( $args{freq} eq 'minutely' ||
                         $args{freq} eq 'secondly' ? 
                           [ 0 .. 59 ] :
                           $dtstart->minute );
 
-   $by{hours} = exists $args{byhour} ?
+    # TODO: replace for negative values, in order to avoid DST changes
+    $by{hours} = exists $args{byhour} ?
                     delete $args{byhour} : 
                     ( $args{freq} eq 'hourly' || 
                       $args{freq} eq 'minutely' ||
@@ -91,46 +92,56 @@ sub recur {
         my %by2 = %by;   # reuse hour/min/sec components
         $by2{days} = exists $args{bymonthday} ?
                          $args{bymonthday} :
-                         $dtstart->day;
-        if ( exists $args{bymonth} ) {
+                         ( $args{freq} eq 'daily' ?
+                             [ 1 .. 31 ] :
+                             $dtstart->day );
+        if ( exists $args{bymonth} ) 
+        {
             $by2{months} = $args{bymonth};
             $by_month_day = DateTime::Event::Recurrence->yearly( %by2 );
             delete $args{bymonth};
         }
-        else {
+        else 
+        {
             $by_month_day = DateTime::Event::Recurrence->monthly( %by2 );
         }
         $has_day = 1;
         delete $args{bymonthday};
     }
+
     my $by_week_day;
     # TODO: byweek without byday
     if ( exists $args{byday} ) 
     {
         my %by2 = %by;   # reuse hour/min/sec components
-        # NOTE: indexed "-1fr" argument not supported yet
+        # TODO: indexed "-1fr" argument not supported yet
         my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4, 
                          fr => 5, sa => 6, su => 7 );
         $by2{days} = map { $weekdays{$_} } @{$args{byday}};
-        if ( exists $args{byweek} ) {
+        if ( exists $args{byweek} ) 
+        {
             $by2{weeks} = $args{byweek};
             $by_week_day = DateTime::Event::Recurrence->yearly( %by2 );
             delete $args{byweek};
         }
-        else {
+        else 
+        {
             $by_week_day = DateTime::Event::Recurrence->weekly( %by2 );
         }
         $has_day = 1;
         delete $args{byday};
     }
 
-    # freq
+    # freq == hourly, minutely, secondly 
     my $by_hour;
-    unless ( $has_day ) {
+    unless ( $has_day ) 
+    {
         no strict 'refs';
         $by_hour = &{"DateTime::Event::Recurrence::$args{freq}"} ( undef, %by );
     }
     # warn 'BASE-SET '. $base_set->intersection($span)->{set};
+
+    # join the rules together
 
     my $base_set = $by_year_day;
     $base_set = $base_set && $by_month_day ?
@@ -144,10 +155,11 @@ sub recur {
                 ( $base_set ? $base_set : $by_hour );
     return DateTime::Set->empty_set unless $base_set;
 
-    # interval count
-    my $interval;
-    if ( exists $args{interval} || exists $args{count} ) {
+    # interval / count
 
+    my $interval;
+    if ( exists $args{interval} || exists $args{count} ) 
+    {
         $args{interval} = 1 unless $args{interval};
         $args{count} = INFINITY unless $args{count};
 
@@ -170,16 +182,11 @@ sub recur {
         delete $args{count};
     }
 
-    # TODO!
-
     $base_set = $base_set->intersection( $interval ) if $interval;
 
+    # TODO:
     # wkst
     # bysetpos
-    # byday
-    # bymonthday byyearday
-    # byweekno
-    # bymonth
 
     # check for nonprocessed arguments
     delete $args{freq};
