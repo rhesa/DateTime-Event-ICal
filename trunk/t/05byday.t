@@ -87,24 +87,19 @@ use DateTime::Event::ICal;
         "monthly, byday, byhour" );
 
     $set = DateTime::Event::ICal->recur(
-       freq => 'yearly',
+       freq => 'monthly',
        dtstart => $dt1,
        dtend => $dt1->clone->add( months => 2 ),
-       bymonth => 7,
        byday => ['3mo', 'fr' ],
        byhour => 10 );
 
     @dt = $set->as_list;
     $r = join(' ', map { $_->datetime } @dt);
-TODO: {
-    local $TODO = "bymonth index+nonindex";
     is( $r,
         '2000-01-07T10:00:00 2000-01-14T10:00:00 2000-01-17T10:00:00 '.
         '2000-01-21T10:00:00 2000-01-28T10:00:00 2000-02-04T10:00:00 '.
-        '2000-01-11T10:00:00 2000-01-18T10:00:00 2000-02-21T10:00:00 '.
-        '2000-01-25T10:00:00',
+        '2000-02-11T10:00:00 2000-02-18T10:00:00 2000-02-21T10:00:00 '.
+        '2000-02-25T10:00:00',
         "monthly, byday index+nonindex, byhour" );
-}
-
 }
 

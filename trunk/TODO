@@ -1,7 +1,5 @@
 TODO list for Perl module DateTime-Event-ICal
 
-* make yearly-byday a separate subroutine, use it into monthly-byday
-
 * optimize byday=>['we','fr'] - a lot!
   DONE:
     - byday with many options makes tests very slow 
@@ -12,7 +10,6 @@ TODO list for Perl module DateTime-Event-ICal
     - use this algorithm when there are more arguments.
 
 * sub _recur_1fr()
-  - make it accept 'FR' (it only accepts '1FR' style)
   - test: freq=>yearly byday=>we
 
 * "byday -2 friday"

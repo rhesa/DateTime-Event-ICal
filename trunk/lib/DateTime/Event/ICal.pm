@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.0302';
+$VERSION = '0.0304';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -160,44 +160,43 @@ sub _monthly_recurrence {
             $by{week_start_day} = $args{wkst} ?
                                   $args{wkst} : '1mo';
 
-            if ( exists $args{bymonthday} )
-            {
+    if ( exists $args{bymonthday} )
+    {
                 $by{days} =    $args{bymonthday};
-            }
-            elsif ( exists $args{byday} )
-            {   
-                # process byday = "1FR" and "FR"
-                $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
-                my @week_days;
-                my @indexed_week_days;
-                for ( @{$args{byday}} ) { 
-                    if ( $_ =~ /\d/ ) {
-                        push @indexed_week_days, $_;
-                    }
-                    else {
-                        push @week_days, $_;
-                    };
-                }
-                delete $$argsref{$_} 
-                    for qw( interval bysecond byminute byhour byday );
-                # $$argsref{byday} = \@week_days if @week_days;
-                # warn "week days @week_days indexed @indexed_week_days";
-                for my $day ( @week_days ) {
-                    push @indexed_week_days, 
-                         map { $_ . $day } qw( 1 2 3 -1 -2 );
-                }
-                # warn "week days @week_days indexed @indexed_week_days";
-                return _recur_1fr( %by, freq => 'monthly', 
-                                   byday => \@indexed_week_days ) 
-                       if @indexed_week_days;
-                die 'no byday args';
-            }
-            else
-            {
+    }
+    elsif ( exists $args{byday} )
+    {   
+                $by{days} =    [ 1 .. 31 ];
+    }
+    else
+    {
                 $by{days} =    $dtstart->day unless exists $by{days};
-            }
+    }
+
+    my $set_byday;
+    if ( exists $args{byday} )
+    {
+        my $freq = 'monthly';
+
+        my %by;
+            $by{seconds} = $args{bysecond} if exists $args{bysecond};
+            $by{seconds} = $dtstart->second unless exists $by{seconds};
+            $by{minutes} = $args{byminute} if exists $args{byminute};
+            $by{minutes} = $dtstart->minute unless exists $by{minutes};
+            $by{hours} =   $args{byhour} if exists $args{byhour};
+            $by{hours} =   $dtstart->hour unless exists $by{hours};
+
+        # process byday = "1FR" and "FR"
+        $set_byday = _recur_1fr(
+            %by, byday => $args{byday}, freq => $freq );
+        delete $$argsref{$_}
+            for qw( byday );
+    }
+
     delete $$argsref{$_}
         for qw( interval bysecond byminute byhour bymonthday );
+    return DateTime::Event::Recurrence->monthly( %by )->intersection( $set_byday
+) if $set_byday;
     return DateTime::Event::Recurrence->monthly( %by );
 }
 
@@ -218,8 +217,8 @@ sub _yearly_recurrence {
                                   $args{wkst} : 'mo';
             # warn "wkst $by{week_start_day}";
 
-            if ( exists $args{bymonth} )
-            {
+    if ( exists $args{bymonth} )
+    {
                 $by{months} =  $args{bymonth};
                 delete $$argsref{bymonth};
 
@@ -229,23 +228,23 @@ sub _yearly_recurrence {
                        exists $args{byday};
                 $by{days} =    $dtstart->day unless exists $by{days};
                 delete $$argsref{bymonthday};
-            }
-            elsif ( exists $args{byweekno} ) 
-            {
+    }
+    elsif ( exists $args{byweekno} ) 
+    {
                 $by{weeks} =  $args{byweekno};
                 delete $$argsref{byweekno};
 
                 $by{days} =    $args{byday} if exists $args{byday};
                 $by{days} =    $dtstart->day_of_week unless exists $by{days};
                 delete $$argsref{byday};
-            }
-            elsif ( exists $args{byyearday} )
-            {
+    }
+    elsif ( exists $args{byyearday} )
+    {
                 $by{days} =    $args{byyearday};
                 delete $$argsref{byyearday};
-            }
-            elsif ( exists $args{byday} )
-            {  
+    }
+    elsif ( exists $args{byday} )
+    {  
                 # process byday = "1FR" and "FR"
 
                 $by{byday} =    $args{byday};
@@ -254,14 +253,15 @@ sub _yearly_recurrence {
                 delete $$argsref{$_} 
                     for qw( interval bysecond byminute byhour byday );
                 return _recur_1fr( %by, freq => 'yearly' );
-            }
-            else {
+    }
+    else 
+    {
                 $by{months} =  $dtstart->month;
 
                 $by{days} =    $args{bymonthday} if exists $args{bymonthday};
                 $by{days} =    $dtstart->day unless exists $by{days};
                 delete $$argsref{bymonthday};
-            }
+    }
 
     my $set_byday;
     if ( exists $args{byday} )
@@ -278,41 +278,10 @@ sub _yearly_recurrence {
             $by{hours} =   $dtstart->hour unless exists $by{hours};
 
         # process byday = "1FR" and "FR"
-        # $by{byday} =    $args{byday};
-        my @week_days;
-        my @indexed_week_days;
-        $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
-        for ( @{$args{byday}} ) {
-            if ( $_ =~ /\d/ ) 
-            {
-                        push @indexed_week_days, $_;
-            }
-            else 
-            {
-                        push @week_days, $_;
-            };
-        }
+        $set_byday = _recur_1fr(
+            %by, byday => $args{byday}, freq => $freq );
         delete $$argsref{$_}
             for qw( byday );
-        $set_byday = _recur_1fr( 
-            %by, byday => [ @indexed_week_days ], freq => $freq ) 
-            if @indexed_week_days;
-        if ( @week_days ) 
-        {
-            @week_days = map { $weekdays{$_} } @week_days;
-            my $set_days = DateTime::Event::Recurrence->weekly(
-                %by, days => [ @week_days ] );
-            if ( $set_byday )
-            {
-                $set_byday = $set_byday->union( $set_days );
-            }
-            else
-            {
-                $set_byday = $set_days;
-            }
-        }
-        
-        delete $by{byday};
     }
 
     delete $$argsref{$_} 
@@ -325,26 +294,39 @@ sub _yearly_recurrence {
 
 sub _recur_1fr {
     # ( freq , interval, dtstart, byday[ week_count . week_day ] )
-    # TODO: accept simple 'FR' specification
     my %args = @_;
     my $base_set;
     my %days;
     my $base_duration;
+    my @days_no_index;
 
     # parse byday
     $args{byday} = [ $args{byday} ] unless ref $args{byday} eq 'ARRAY';
     for ( @{$args{byday}} ) 
     {
         my ( $count, $day_name ) = $_ =~ /(.*)(\w\w)/;
-        die "week count ($count) can't be zero" unless $count;
         my $week_day = $weekdays{ $day_name };
         die "invalid week day ($day_name)" unless $week_day;
-        push @{$days{$day_name}}, $count;
-
+        if ( $count )
+        {
+            push @{$days{$day_name}}, $count;
+        }
+        else
+        {
+            # die "week count ($count) can't be zero" unless $count;
+            push @days_no_index, $week_day;
+        }
     }
     delete $args{byday};
 
     my $result;
+    if ( @days_no_index )
+    {
+        my %_args = %args;
+        $_args{days} = \@days_no_index;
+        delete $_args{freq};
+        $result = DateTime::Event::Recurrence->weekly( %_args );
+    }
     for ( keys %days ) 
     {
         my %_args = %args;
