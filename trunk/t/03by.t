@@ -42,8 +42,6 @@ use DateTime::Event::ICal;
         '2004-02-03T12:10:45 2004-02-13T12:10:45',
         "yearly, dtstart, bymonthday, bymonth" );
 
-TODO: {
-    local $TODO = "byweekno should set day to dtstart->day_of_week";
     # YEARLY BYWEEKNO
     $set = DateTime::Event::ICal->recur( 
        freq =>       'yearly',
@@ -55,9 +53,8 @@ TODO: {
                          end => $dt1->clone->add( years => 1 ) );
     $r = join(' ', map { $_->datetime } @dt);
     is( $r,
-        '',
+        '2004-01-08T12:10:45 2004-03-18T12:10:45',
         "yearly, dtstart, byweekno" );
-  }
 
 }
 

@@ -110,19 +110,26 @@ sub recur {
     }
 
     my $by_week_day;
-    # TODO: byweek without byday
-    if ( exists $args{byday} ) 
+    # TODO: byweekno without byday
+    if ( exists $args{byday} ||
+         exists $args{byweekno} ) 
     {
         my %by2 = %by;   # reuse hour/min/sec components
         # TODO: indexed "-1fr" argument not supported yet
         my %weekdays = ( mo => 1, tu => 2, we => 3, th => 4, 
                          fr => 5, sa => 6, su => 7 );
-        $by2{days} = map { $weekdays{$_} } @{$args{byday}};
-        if ( exists $args{byweek} ) 
+
+        $by2{days} = exists $args{byday} ?
+                         map { $weekdays{$_} } @{$args{byday}} :
+                         ( $args{freq} eq 'daily' ?
+                             [ 1 .. 7 ] :
+                             $dtstart->day_of_week );
+
+        if ( exists $args{byweekno} ) 
         {
-            $by2{weeks} = $args{byweek};
+            $by2{weeks} = $args{byweekno};
             $by_week_day = DateTime::Event::Recurrence->yearly( %by2 );
-            delete $args{byweek};
+            delete $args{byweekno};
         }
         else 
         {
@@ -236,7 +243,7 @@ C<DateTime::Set> objects for rfc2445 style recurrences.
 
 =over 4
 
-=item * recur
+=item recur
 
 This method returns a C<DateTime::Set> object representing the
 given recurrence.
