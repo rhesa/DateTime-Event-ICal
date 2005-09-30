@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence 0.11;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = 0.08;
+$VERSION = 0.09;
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -431,8 +431,13 @@ sub _recur_bysetpos {
                     my $subset = $args{recurrence}->intersection( $span );
                     my @list = $subset->as_list;
                     # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+
                     # select
-                    @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
+                    my @l = @list[ @{$args{bysetpos}} ];
+                    @l = grep { defined $_ } @l;
+                    @list = sort { $a <=> $b } @l;
+                    ## @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
+
                     # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
                     for ( @list ) {
                         # print STDERR "    choose: ".$_->datetime."\n" if $_ > $self;
@@ -462,8 +467,13 @@ sub _recur_bysetpos {
                 my $subset = $args{recurrence}->intersection( $span );
                 my @list = $subset->as_list;
                 # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
+
                 # select
-                @list = sort { $b <=> $a } @list[ @{$args{bysetpos}} ];
+                my @l = @list[ @{$args{bysetpos}} ];
+                @l = grep { defined $_ } @l;
+                @list = sort { $b <=> $a } @l;
+                ## @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
+
                 # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
                 for ( @list ) {
                     return $_ if $_ < $self;
