@@ -825,7 +825,7 @@ See RFC 2445, section 4.3.10 for more details.
 =head1 AUTHOR
 
 Flavio Soibelmann Glock
-fglock@pucrs.br
+fglock@gmail.com
 
 =head1 CREDITS
 
