@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence 0.11;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = 0.09;
+$VERSION = 0.10;
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -30,6 +30,7 @@ my %freqs = (
 );
 
 # internal debugging method - formats the argument list for error messages
+# the output from this routine is also used by DateTime::Format::ICal->format_recurrence()
 sub _param_str {
     my %param = @_;
     my @str;
@@ -42,7 +43,12 @@ sub _param_str {
             push @str, "$_=". join( ',', @{$param{$_}} )
         }
         elsif ( UNIVERSAL::can( $param{$_}, 'datetime' ) ) {
-            push @str, "$_=". $param{$_}->datetime 
+            if ( $DateTime::Format::ICal::VERSION ) {
+                push @str, "$_=" . DateTime::Format::ICal->format_datetime( $param{$_} );
+            }
+            else {
+                push @str, "$_=". $param{$_}->datetime 
+            }
         }
         elsif ( defined $param{$_} ) {
             push @str, "$_=". $param{$_} 

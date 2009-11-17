@@ -1,5 +1,9 @@
 Changes for DateTime-Event-ICal
 
+0.10    2009-11-17
+- fixed recurrence stringification by DateTime::Format::ICal
+  Reported by Nick Spacek
+
 0.09    2005-09-30
 - fixed a warning in BYSETPOS
   Reported by Mark D. Anderson 
