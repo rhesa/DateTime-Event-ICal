@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence 0.11;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -492,6 +492,28 @@ sub _recur_bysetpos {
     );
 }
 
+# map frequencies to recurrence constructors
+{
+  my %frequencies = (
+        secondly => \&_secondly_recurrence,
+        minutely => \&_minutely_recurrence,
+        hourly   => \&_hourly_recurrence,
+        daily    => \&_daily_recurrence,
+        monthly  => \&_monthly_recurrence,
+        weekly   => \&_weekly_recurrence,
+        yearly   => \&_yearly_recurrence,
+       );
+
+  sub _recur_by_freq {
+    my ($freq,$dtstart,$args) = @_;
+
+    return $frequencies{$freq}->($dtstart,$args)
+      if exists $frequencies{$freq};
+
+    return undef;
+  }
+}
+
 # main recurrence constructor
 
 sub recur {
@@ -551,31 +573,11 @@ sub recur {
         }
     }
 
-    # TODO: use a hash of CODE
     my $base_set;
     my %by;
-    if ( $args{freq} eq 'secondly' ) {
-        $base_set = _secondly_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'minutely' ) {
-        $base_set = _minutely_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'hourly' ) {
-        $base_set = _hourly_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'daily' ) {
-        $base_set = _daily_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'monthly' ) {
-        $base_set = _monthly_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'weekly' ) {
-        $base_set = _weekly_recurrence($dtstart, \%args);
-    }
-    elsif ( $args{freq} eq 'yearly' ) {
-        $base_set = _yearly_recurrence($dtstart, \%args);
-    }
-    else {
+
+    $base_set = _recur_by_freq($args{freq},$dtstart,\%args);
+    unless (defined $base_set) {
         die "invalid freq ($args{freq})";
     }
 
