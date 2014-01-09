@@ -765,7 +765,7 @@ means a recurrence that occurs every three years.
 =item * wkst
 
 Week start day.  This can be one of: "mo", "tu", "we", "th", "fr",
-"sa", "su".  The default is monday ("mo").
+"sa", "su".  The default is Monday ("mo").
 
 B<Note: this parameter is not yet implemented>
 
@@ -805,7 +805,7 @@ but not zero.  The allowed ranges are -53 to -1, and 1 to 53.
 
 The first week of year is week 1.
 
-The default week start day is monday.
+The default week start day is Monday.
 
 Week -1 is the last week of year.
 
@@ -824,7 +824,7 @@ See RFC 2445, section 4.3.10 for more details.
 
 This can be either a scalar or an array reference of positive and
 negative numbers from -366 to -1, and 1 to 366.  This parameter is
-used in conjuction with one of the other "by..." parameters.
+used in conjunction with one of the other "by..." parameters.
 
 See RFC 2445, section 4.3.10 for more details.
 
