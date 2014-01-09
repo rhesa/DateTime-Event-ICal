@@ -10,5 +10,14 @@ use ExtUtils::MakeMaker;
                    PREREQ_PM    => { 'DateTime' => 0,
                                      'DateTime::Event::Recurrence' => 0.11,
                                    },
+                   META_MERGE   => { 'meta-spec' => { version => 2 },
+                                     resources => {
+                                        repository => {
+                                            type => 'git',
+                                            url => 'https://github.com/fglock/DateTime-Event-ICal.git',
+                                            web => 'https://github.com/fglock/DateTime-Event-ICal',
+                                        },
+                                     },
+                                   },
                  );
 
