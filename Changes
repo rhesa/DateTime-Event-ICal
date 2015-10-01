@@ -1,7 +1,7 @@
 Changes for DateTime-Event-ICal
 
-0.12    2015-10-??
-- Fixed pod warnings
+0.12    2015-10-01
+- Fixed pod warnings, by neilbowers
 - Made all the SEE ALSO references hyperlinks, and made mentions
   of other modules into links as well.
 
