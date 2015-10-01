@@ -1,9 +1,13 @@
 Changes for DateTime-Event-ICal
 
-0.12    2015-10-01
+0.13    2015-10-01
 - Fixed pod warnings, by neilbowers
 - Made all the SEE ALSO references hyperlinks, and made mentions
   of other modules into links as well.
+
+0.12    2014-07-17
+- fix BYMONTH, BYMONTHDAY constraints to FREQ=MINUTELY, FREQ=HOURLY, and FREQ=SECONDLY.
+  patch and tests provided by Andrew Sterling Hanenkamp
 
 0.11    2012-11-06
 - performance patch, provided by Dario Hamidi

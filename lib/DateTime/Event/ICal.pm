@@ -11,7 +11,7 @@ use DateTime::Event::Recurrence 0.11;
 use Params::Validate qw(:all);
 use vars qw( $VERSION @ISA );
 @ISA     = qw( Exporter );
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 use constant INFINITY     =>       100 ** 100 ** 100 ;
 use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
@@ -598,7 +598,16 @@ sub recur {
     if ( exists $args{bymonthday} ||
          exists $args{bymonth} ) 
     {
-        $by_month_day = _yearly_recurrence($dtstart, \%args);
+        my %by = %args;
+        $by{byhour} = $args_backup{byhour} if $args_backup{byhour};
+        $by{byhour} = [ 0 .. 23 ] if $args{freq} eq 'hourly';
+        $by{byminute} = $args_backup{byminute} if $args_backup{byminute};
+        $by{byminute} = [ 0 .. 59 ] if $args{freq} eq 'minutely';
+        $by{bysecond} = $args_backup{bysecond} if $args_backup{bysecond};
+        $by{bysecond} = [ 0 .. 59 ] if $args{freq} eq 'secondly';
+        $by_month_day = _yearly_recurrence($dtstart, \%by);
+        delete $args{bymonthday};
+        delete $args{bymonth};
     }
 
     my $by_week_day;
@@ -606,7 +615,16 @@ sub recur {
     if ( exists $args{byday} ||
          exists $args{byweekno} ) 
     {
-        $by_week_day = _weekly_recurrence($dtstart, \%args);
+        my %by = %args;
+        $by{byhour} = $args_backup{byhour} if $args_backup{byhour};
+        $by{byhour} = [ 0 .. 23 ] if $args{freq} eq 'hourly';
+        $by{byminute} = $args_backup{byminute} if $args_backup{byminute};
+        $by{byminute} = [ 0 .. 59 ] if $args{freq} eq 'minutely';
+        $by{bysecond} = $args_backup{bysecond} if $args_backup{bysecond};
+        $by{bysecond} = [ 0 .. 59 ] if $args{freq} eq 'secondly';
+        $by_week_day = _weekly_recurrence($dtstart, \%by);
+        delete $args{byday};
+        delete $args{byweekno};
     }
 
     my $by_hour;

@@ -1,5 +1,7 @@
 TODO list for Perl module DateTime-Event-ICal
 
+* high frequency FREQ can be optimized by precomputing larger steps of INTERVAL
+
 * include this in docs:
   http://www.w3.org/2001/sw/Europe/200210/calendar/vocab_usecases.html
   http://www.imc.org/ietf-calendar/mail-archive/msg00623.html
