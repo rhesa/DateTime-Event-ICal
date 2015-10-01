@@ -673,7 +673,7 @@ DateTime::Event::ICal - Perl DateTime extension for computing rfc2445 recurrence
 
  use DateTime;
  use DateTime::Event::ICal;
- 
+
  my $dt = DateTime->new( year   => 2000,
                          month  => 6,
                          day    => 20,
@@ -827,6 +827,8 @@ negative numbers from -366 to -1, and 1 to 366.  This parameter is
 used in conjunction with one of the other "by..." parameters.
 
 See RFC 2445, section 4.3.10 for more details.
+
+=back
 
 =back
 
