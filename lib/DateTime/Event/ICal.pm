@@ -673,7 +673,7 @@ DateTime::Event::ICal - Perl DateTime extension for computing rfc2445 recurrence
 
  use DateTime;
  use DateTime::Event::ICal;
- 
+
  my $dt = DateTime->new( year   => 2000,
                          month  => 6,
                          day    => 20,
@@ -711,7 +711,7 @@ C<DateTime::Set> objects for rfc2445 style recurrences.
 
 =item recur
 
-This method returns a C<DateTime::Set> object representing the
+This method returns a L<DateTime::Set> object representing the
 given recurrence.
 
   my $set = DateTime::Event::ICal->recur( %args );
@@ -725,7 +725,7 @@ what all these parameters represent.
 
 =item * dtstart
 
-A DateTime object, which is the start date.
+A L<DateTime> object, which is the start date.
 
 This datetime is not included in the recurrence, unless it satisfies
 the recurrence's rules.
@@ -830,6 +830,8 @@ See RFC 2445, section 4.3.10 for more details.
 
 =back
 
+=back
+
 =head1 AUTHOR
 
 Flavio Soibelmann Glock
@@ -854,22 +856,22 @@ with this module.
 
 datetime@perl.org mailing list
 
-DateTime Web page at http://datetime.perl.org/
+L<DateTime Web page|http://datetime.perl.org/>
 
-DateTime
+The L<DateTime> module.
 
-DateTime::Event::Recurrence - simple rule-based recurrences
+L<DateTime::Event::Recurrence> - simple rule-based recurrences.
 
-DateTime::Format::ICal - can parse rfc2445 recurrences
+L<DateTime::Format::ICal> - can parse rfc2445 recurrences.
 
-DateTime::Set - recurrences defined by callback subroutines
+L<DateTime::Set> - recurrences defined by callback subroutines.
 
-DateTime::Event::Cron - recurrences defined by "cron" rules
+L<DateTime::Event::Cron> - recurrences defined by "cron" rules.
 
-DateTime::SpanSet
+L<DateTime::SpanSet>
 
-RFC2445 - Internet Calendaring and Scheduling Core Object
-Specification - http://www.ietf.org/rfc/rfc2445.txt
+L<RFC2445|http://www.ietf.org/rfc/rfc2445.txt> -
+Internet Calendaring and Scheduling Core Object Specification.
 
 =cut
 
