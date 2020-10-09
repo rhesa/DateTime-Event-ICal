@@ -389,7 +389,7 @@ sub _recur_bysetpos {
     # die "invalid bysetpos parameter [@{$args{bysetpos}}]" 
     #     unless @{$args{bysetpos}};
     # print STDERR "bysetpos:  [@{$args{bysetpos}}]\n";
-    for ( @{$args{bysetpos}} ) { $_-- if $_ > 0 }
+#   for ( @{$args{bysetpos}} ) { $_-- if $_ > 0 }
 
     return DateTime::Set->from_recurrence (
         next =>
@@ -433,22 +433,33 @@ sub _recur_bysetpos {
                     my $span = DateTime::Span->from_datetimes( 
                               start => $start,
                               before => $end );
-                    # print STDERR "    done span\n";
                     my $subset = $args{recurrence}->intersection( $span );
-                    my @list = $subset->as_list;
-                    # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
 
-                    # select
-                    my @l = @list[ @{$args{bysetpos}} ];
-                    @l = grep { defined $_ } @l;
-                    @list = sort { $a <=> $b } @l;
-                    ## @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
-
-                    # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
-                    for ( @list ) {
-                        # print STDERR "    choose: ".$_->datetime."\n" if $_ > $self;
-                        return $_ if $_ > $self;
+                    # find the smallest entry larger than $self
+                    # in $subset at one of the bysetpos positions.
+                    my @pos = @{$args{bysetpos}};
+                    for my $p (@pos) {
+                        my $it = $subset->iterator;
+                        my $pc = $p;
+                        if ($pc == 0) {
+                            return $start if $start > $self;
+                        } elsif ($pc > 0) {
+                            my $n;
+                            while ($pc-- > 0) {
+                                my $nn  = $it->next;
+                                $n = $nn if defined $nn;
+                            }
+                            return $n if $n > $self;
+                        } else { # negative setpos, look from end
+                            my $n = $it->previous($end);
+                            while($pc++ < 0) {
+                                my $nn = $it->previous;
+                                $n = $nn if defined $nn;
+                            }
+                            return $n if $n > $self;
+                        }
                     }
+
                 }
                 $start = $end;
             }  # /while
@@ -469,21 +480,33 @@ sub _recur_bysetpos {
                 my $span = DateTime::Span->from_datetimes(
                           start => $start,
                           before => $end );
-                # print STDERR "    done span\n";
                 my $subset = $args{recurrence}->intersection( $span );
-                my @list = $subset->as_list;
-                # print STDERR "    got list ".join(",", map{$_->datetime}@list)."\n";
 
-                # select
-                my @l = @list[ @{$args{bysetpos}} ];
-                @l = grep { defined $_ } @l;
-                @list = sort { $b <=> $a } @l;
-                ## @list = sort { $a <=> $b } @list[ @{$args{bysetpos}} ];
-
-                # print STDERR "    selected [@{$args{bysetpos}}]".join(",", map{$_->datetime}@list)."\n";
-                for ( @list ) {
-                    return $_ if $_ < $self;
+                # find the largest entry smaller than $self
+                # in $subset at one of the bysetpos positions.
+                my @pos = @{$args{bysetpos}};
+                for my $p (@pos) {
+                    my $it = $subset->iterator;
+                    my $pc = $p;
+                    if ($pc == 0) {
+                        return $start if $start < $self;
+                    } elsif ($pc > 0) {
+                        my $n;
+                        while ($pc-- > 0) {
+                            my $nn = $it->next;
+                            $n = $nn if defined $nn;
+                        }
+                        return $n if $n < $self;
+                    } else { # negative setpos, look from end
+                        my $n = $end;
+                        while($pc++ < 0) {
+                            my $nn = $it->previous($n);
+                            $n = $nn if defined $nn;
+                        }
+                        return $n if $n < $self;
+                    }
                 }
+
                 return undef unless $count--;
                 $end = $start;
                 $start = $base_set->previous( $start );
