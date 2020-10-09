@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 use DateTime;
 use DateTime::Event::ICal;
@@ -107,7 +107,6 @@ use DateTime::Event::ICal;
         '2004-01-09T10:10:45 2004-01-09T14:10:45',
         "yearly, dtstart, byday=1fr,2fr,-1tu, byhour" );
 
-
     # MONTHLY BYSETPOS
     $set = DateTime::Event::ICal->recur(
        freq =>       'monthly',
@@ -115,7 +114,6 @@ use DateTime::Event::ICal;
        bymonthday => [ -1, -2, -3, -4, -5, -6 ],
        bysetpos =>   [ 3, -2 ],
     );
-
 
     @dt = $set->as_list( start => $dt1,
                          end => $dt1->clone->add( months => 3 ) );
@@ -126,6 +124,23 @@ use DateTime::Event::ICal;
         '2003-05-30T12:10:45 2003-06-27T12:10:45 2003-06-29T12:10:45 '.
         '2003-07-28T12:10:45',
         "monthly, bymonthday, bysetpos" ); 
+
+    # 3-YEARLY BYSETPOS
+    # RRULE:FREQ=YEARLY;INTERVAL=3;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYSETPOS=-1
+    $set = DateTime::Event::ICal->recur(
+       freq =>       'yearly',
+       interval =>   3,
+       dtstart =>    $dt1,
+       byday =>      [ 'mo', 'tu', 'we', 'th', 'fr', 'sa', 'su' ],
+       bysetpos =>   [ -1 ],
+    );
+
+
+    @dt = $set->as_list( start => $dt1,
+                         end => $dt1->clone->add( years => 9 ) );
+    $r = join(' ', map { $_->datetime } @dt);
+    is( $r, '2003-12-31T12:10:45 2006-12-31T12:10:45 2009-12-31T12:10:45',
+        "3-yearly, last day of year, bysetpos" );
 
 
 }
